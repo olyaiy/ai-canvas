@@ -1,10 +1,9 @@
-import Image from "next/image";
-import FlowPage from "./(routes)/canvas/page";
+import Flow from "./(routes)/canvas/page";
 
-export default function Home() {
+export default function Page() {
   return (
-  <>
-  <FlowPage />
-  </>
+    <div className="h-screen w-full bg-red-500/10 m-24 border border-red-500">
+      <Flow />
+    </div>
   );
 }
