@@ -10,23 +10,20 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
-
 export async function anthropicCall(
-  prompt: string, 
+  prompt: string,
   model: string = 'claude-3-5-haiku-latest',
-  systemPrompt: string = 'You are a helpful assistant'
+  systemPrompt: string = 'You are a helpful assistant',
 ) {
-    console.log('Sending prompt to Anthropic:', prompt);
-    const msg = await anthropic.messages.create({
-        model: model,
-        max_tokens: 8192,
-        temperature: 0.4,
-        system: systemPrompt,
-        messages: [
-            { role: "user", content: prompt }
-        ],
-    });
-    return msg.content[0].type === "text" ? msg.content[0].text : "";
+  const stream = await anthropic.messages.stream({
+    model,
+    max_tokens: 8192,
+    temperature: 0.4,
+    system: systemPrompt,
+    messages: [{ role: "user", content: prompt }],
+  });
+
+  return stream;
 }
 
 

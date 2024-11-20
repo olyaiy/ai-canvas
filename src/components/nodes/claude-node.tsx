@@ -21,11 +21,13 @@ interface ClaudeNodeData {
   systemPrompt?: string
 }
 
-const CLAUDE_MODELS = {
+export const CLAUDE_MODELS = {
   'claude-3-5-haiku-latest': 'Claude 3 Haiku',
   'claude-3-5-sonnet-latest': 'Claude 3 Sonnet',
   'claude-3-opus-latest': 'Claude 3 Opus'
 } as const
+
+export type ClaudeModelType = keyof typeof CLAUDE_MODELS;
 
 export function ClaudeNode({ 
   data, 
@@ -71,25 +73,33 @@ export function ClaudeNode({
 
   const handleGenerate = useCallback(async () => {
     setIsLoading(true)
+    setOutput('')
+    
     try {
       const edges = getEdges()
       const incomingEdge = edges.find(edge => edge.target === nodeId)
       
-      if (incomingEdge) {
-        const promptNode = getNode(incomingEdge.source)
-        const promptNodeData = promptNode?.data as Record<string, unknown>
-        const prompt = promptNodeData?.value as string
-        
-        if (!prompt) {
-          setOutput('Error: No prompt text found')
-          return
+      if (!incomingEdge) return
+      
+      const promptNode = getNode(incomingEdge.source)
+      const prompt = promptNode?.data?.value as string
+      
+      if (!prompt) {
+        setOutput('Error: No prompt text found')
+        return
+      }
+
+      const stream = await anthropicCall(prompt, selectedModel as ClaudeModelType, systemPrompt)
+      
+      let fullResponse = ''
+      for await (const message of stream) {
+        if (message.type === 'content_block_delta' && message.delta.type === 'text_delta') {
+          fullResponse += message.delta.text
+          setOutput(fullResponse)
         }
-        
-        const response = await anthropicCall(prompt, selectedModel, systemPrompt)
-        setOutput(response)
       }
     } catch (error) {
-      console.error('Error generating response:', error)
+      console.error('Error:', error)
       setOutput('Error generating response')
     } finally {
       setIsLoading(false)
@@ -142,19 +152,22 @@ export function ClaudeNode({
             value={systemPrompt}
             onChange={(e) => setSystemPrompt(e.target.value)}
             placeholder="Enter system prompt..."
-            className="resize-none"
-            rows={4}
+            className="resize-none min-h-[24px] max-h-[96px] overflow-y-auto"
+            rows={1}
           />
         </div>
 
-        {output && (
-          <div className="mt-2">
-            <div className="font-semibold text-sm text-gray-700 mb-1">Output:</div>
-            <div className="p-2 bg-gray-50 rounded-md text-sm whitespace-pre-wrap">
-              {output}
-            </div>
+        <div className="mt-4 border rounded-lg bg-gray-50 p-3">
+          <div className="font-medium text-sm text-gray-700 mb-2 flex items-center gap-2">
+            <div className={`h-2 w-2 rounded-full ${output ? 'bg-green-500' : 'bg-gray-400'}`} />
+            Output
           </div>
-        )}
+          <div className="p-3 bg-white rounded-md text-sm whitespace-pre-wrap max-w-[500px] h-[100px] overflow-auto border border-gray-100 shadow-sm">
+            {output || (
+              <span className="text-gray-400 italic">No output generated yet</span>
+            )}
+          </div>
+        </div>
       </div>
 
       <Handle
