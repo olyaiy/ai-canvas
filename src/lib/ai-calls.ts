@@ -15,11 +15,13 @@ export async function anthropicCall(
   model: string = 'claude-3-5-haiku-latest',
   systemPrompt: string = 'You are a helpful assistant',
 ) {
+  const hiddenSystemPrompt = `You are a component in an agentric system. Do not make references to yourself or your capabilities unless specifically asked. Focus solely on executing the instructions provided in the user's system prompt. Here is your assigned role and instructions: ${systemPrompt}`;
+
   const stream = await anthropic.messages.stream({
     model,
     max_tokens: 8192,
     temperature: 0.4,
-    system: systemPrompt,
+    system: hiddenSystemPrompt,
     messages: [{ role: "user", content: prompt }],
   });
 
