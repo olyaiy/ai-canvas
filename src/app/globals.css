@@ -82,3 +82,7 @@ body {
     stroke-dashoffset: 0;
   }
 }
+
+.react-flow__edge-path-selector:hover {
+  cursor: pointer;
+}
