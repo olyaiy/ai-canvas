@@ -17,23 +17,31 @@ import { Plus } from "lucide-react";
 
 const nodeTypes = { textUpdater: TextUpdaterNode, promptInput: PromptInputNode, claude: ClaudeNode, gpt: GPTNode }
 
-const initialEdges: any[] = [];
 
 const initialNodes = [
-
   {
-    id: 'node-4',
+    id: 'prompt-1',
     type: 'promptInput',
-    position: { x: 300, y: 0 },
+    position: { x: 300, y: 10 },
     data: { value: "testing prompt input node" },
-
   },
   {
-    id: 'node-5',
-    type: 'claude',
-    position: { x: 300, y: 400 },
+    id: 'gpt-1',
+    type: 'gpt',
+    position: { x: 600, y: 300 },
     data: { 
       systemPrompt: "You are a helpful assistant",
+      output: undefined,
+      temperature: 0.4,
+      maxTokens: 16384,
+    },
+  },
+  {
+    id: 'claude-1',
+    type: 'claude',
+    position: { x: 100, y: 400 },
+    data: { 
+      systemPrompt: "remove spaces in the following sentance:",
       output: undefined,
       temperature: 0.4,
       maxTokens: 8192,
@@ -41,8 +49,19 @@ const initialNodes = [
   },
 ];
 
+const initialEdges = [
+  {
+    id: 'prompt-to-gpt',
+    source: 'prompt-1',
+    target: 'gpt-1',
+  },
+  {
+    id: 'gpt-to-claude',
+    source: 'gpt-1',
+    target: 'claude-1',
+  },
+];
 
- 
 export default function Flow() {
   const [nodes, setNodes] = useState(initialNodes);
   const [edges, setEdges] = useState(initialEdges);
@@ -136,17 +155,17 @@ export default function Flow() {
       <div className="absolute bottom-4 right-4 flex gap-2">
         <Button
           onClick={addGPTNode}
-          className="bg-[#10a37f] hover:bg-[#0d8a6c] text-white"
-          size="icon"
+          className="bg-[#10a37f] hover:bg-[#0d8a6c] text-white flex items-center gap-2"
         >
           <Plus className="h-4 w-4" />
+          <span>New GPT Agent</span>
         </Button>
         <Button
           onClick={addClaudeNode}
-          className="bg-[#D4A27F] hover:bg-[#b88b6b] text-black"
-          size="icon"
+          className="bg-[#D4A27F] hover:bg-[#b88b6b] text-black flex items-center gap-2"
         >
           <Plus className="h-4 w-4" />
+          <span>New Claude Agent</span>
         </Button>
       </div>
     </div>

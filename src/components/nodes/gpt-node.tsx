@@ -180,19 +180,19 @@ export function GPTNode({
           position={Position.Top}
           id="gpt-in"
           isConnectable={isConnectable}
-          className={`!w-6 !h-6 ${
-            hasInputConnection ? '!bg-black' : '!bg-gray-400'
-          } transition-colors cursor-crosshair hover:!bg-gray-600 hover:scale-110`}
+          className={`!w-8 !h-8 ${
+            hasInputConnection ? '!bg-[#10A37F]' : '!bg-[#10A37F]'
+          } !transition-all !duration-150 cursor-grab active:cursor-grabbing hover:!bg-[#0A8F6C] 
+          before:!absolute before:!inset-0 before:!rounded-full before:!transition-all before:!duration-150
+          hover:before:!ring-2 hover:before:!ring-[#10A37F] hover:before:!ring-offset-2 hover:before:!ring-offset-[#212121]
+          !flex !items-center !justify-center`}
           style={{ 
             transform: 'translate(-50%, -100%)',
             zIndex: 100 
           }}
-        />
-        <ChevronDown 
-          className={`absolute -top-4 left-1/2 -translate-x-1/2 w-4 h-4 pointer-events-none ${
-            hasInputConnection ? 'text-black' : 'text-gray-400'
-          } transition-colors`}
-        />
+        >
+          <ChevronDown className="w-5 h-5 text-white" />
+        </Handle>
       </div>
       
       <div className="flex flex-col gap-3">
@@ -285,19 +285,19 @@ export function GPTNode({
           position={Position.Bottom}
           id="gpt-out"
           isConnectable={isConnectable}
-          className={`!w-6 !h-6 ${
-            hasOutputConnection ? '!bg-black' : '!bg-gray-400'
-          } transition-colors cursor-crosshair hover:!bg-gray-600 hover:scale-110`}
+          className={`!w-8 !h-8 ${
+            hasOutputConnection ? '!bg-[#10A37F]' : '!bg-[#10A37F]'
+          } !transition-all !duration-150 cursor-grab active:cursor-grabbing hover:!bg-[#0A8F6C]
+          before:!absolute before:!inset-0 before:!rounded-full before:!transition-all before:!duration-150
+          hover:before:!ring-2 hover:before:!ring-[#10A37F] hover:before:!ring-offset-2 hover:before:!ring-offset-[#212121]
+          !flex !items-center !justify-center`}
           style={{ 
             transform: 'translate(-50%, 100%)',
             zIndex: 100 
           }}
-        />
-        <ChevronDown 
-          className={`absolute -bottom-4 left-1/2 -translate-x-1/2 w-4 h-4 pointer-events-none ${
-            hasOutputConnection ? 'text-black' : 'text-gray-400'
-          } transition-colors`}
-        />
+        >
+          <ChevronDown className="w-5 h-5 text-white" />
+        </Handle>
       </div>
     </div>
   )

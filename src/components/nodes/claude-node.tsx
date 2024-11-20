@@ -179,19 +179,19 @@ export function ClaudeNode({
           position={Position.Top}
           id="claude-in"
           isConnectable={isConnectable}
-          className={`!w-6 !h-6 ${
-            hasInputConnection ? '!bg-[#262625]' : '!bg-gray-400'
-          } transition-colors cursor-crosshair hover:!bg-gray-600 hover:scale-110`}
+          className={`!w-8 !h-8 ${
+            hasInputConnection ? '!bg-[#6749C6]' : '!bg-[#6749C6]'
+          } !transition-all !duration-150 cursor-grab active:cursor-grabbing hover:!bg-[#5438B4] 
+          before:!absolute before:!inset-0 before:!rounded-full before:!transition-all before:!duration-150
+          hover:before:!ring-2 hover:before:!ring-[#6749C6] hover:before:!ring-offset-2 hover:before:!ring-offset-[#D4A27F]
+          !flex !items-center !justify-center`}
           style={{ 
             transform: 'translate(-50%, -100%)',
             zIndex: 100 
           }}
-        />
-        <ChevronDown 
-          className={`absolute -top-4 left-1/2 -translate-x-1/2 w-4 h-4 pointer-events-none ${
-            hasInputConnection ? 'text-[#262625]' : 'text-gray-400'
-          } transition-colors`}
-        />
+        >
+          <ChevronDown className="w-5 h-5 text-white" />
+        </Handle>
       </div>
       
       <div className="flex flex-col gap-3">
@@ -286,19 +286,19 @@ export function ClaudeNode({
           position={Position.Bottom}
           id="claude-out"
           isConnectable={isConnectable}
-          className={`!w-6 !h-6 ${
-            hasOutputConnection ? '!bg-[#262625]' : '!bg-gray-400'
-          } transition-colors cursor-crosshair hover:!bg-gray-600 hover:scale-110`}
+          className={`!w-8 !h-8 ${
+            hasOutputConnection ? '!bg-[#6749C6]' : '!bg-[#6749C6]'
+          } !transition-all !duration-150 cursor-grab active:cursor-grabbing hover:!bg-[#5438B4]
+          before:!absolute before:!inset-0 before:!rounded-full before:!transition-all before:!duration-150
+          hover:before:!ring-2 hover:before:!ring-[#6749C6] hover:before:!ring-offset-2 hover:before:!ring-offset-[#D4A27F]
+          !flex !items-center !justify-center`}
           style={{ 
             transform: 'translate(-50%, 100%)',
             zIndex: 100 
           }}
-        />
-        <ChevronDown 
-          className={`absolute -bottom-4 left-1/2 -translate-x-1/2 w-4 h-4 pointer-events-none ${
-            hasOutputConnection ? 'text-[#262625]' : 'text-gray-400'
-          } transition-colors`}
-        />
+        >
+          <ChevronDown className="w-5 h-5 text-white" />
+        </Handle>
       </div>
     </div>
   )
