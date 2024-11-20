@@ -2,6 +2,7 @@
 import { PromptInputNode } from '@/components/nodes/prompt-input-node';
 import TextUpdaterNode from '@/components/nodes/text-updater-node';
 import { ClaudeNode } from '@/components/nodes/claude-node';
+import { GPTNode } from '@/components/nodes/gpt-node';
 import {
   ReactFlow,
   Controls,
@@ -14,7 +15,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 
-const nodeTypes = { textUpdater: TextUpdaterNode, promptInput: PromptInputNode, claude: ClaudeNode }
+const nodeTypes = { textUpdater: TextUpdaterNode, promptInput: PromptInputNode, claude: ClaudeNode, gpt: GPTNode }
 
 const initialEdges: any[] = [];
 
@@ -95,6 +96,27 @@ export default function Flow() {
     setNodes((nds) => [...nds, newNode]);
   }, []);
 
+  const addGPTNode = useCallback(() => {
+    const position = {
+      x: Math.random() * 500,
+      y: Math.random() * 500,
+    };
+
+    const newNode = {
+      id: `gpt-${Date.now()}`,
+      type: 'gpt',
+      position,
+      data: { 
+        systemPrompt: "You are a helpful assistant",
+        output: undefined,
+        temperature: 0.4,
+        maxTokens: 8192,
+      },
+    };
+
+    setNodes((nds) => [...nds, newNode]);
+  }, []);
+
   return (
     <div style={{ height: '100%' }}>
       <ReactFlow
@@ -111,13 +133,22 @@ export default function Flow() {
         <Controls />
       </ReactFlow>
       
-      <Button
-        onClick={addClaudeNode}
-        className="absolute bottom-4 right-4 bg-[#D4A27F] hover:bg-[#b88b6b] text-black"
-        size="icon"
-      >
-        <Plus className="h-4 w-4" />
-      </Button>
+      <div className="absolute bottom-4 right-4 flex gap-2">
+        <Button
+          onClick={addGPTNode}
+          className="bg-[#10a37f] hover:bg-[#0d8a6c] text-white"
+          size="icon"
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
+        <Button
+          onClick={addClaudeNode}
+          className="bg-[#D4A27F] hover:bg-[#b88b6b] text-black"
+          size="icon"
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
+      </div>
     </div>
   );
 }
