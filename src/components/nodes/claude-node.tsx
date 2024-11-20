@@ -3,7 +3,7 @@
 import { useCallback, useState, useMemo, useEffect } from 'react'
 import { Handle, Position, useNodeId, useReactFlow, useUpdateNodeInternals } from '@xyflow/react'
 import { Button } from '@/components/ui/button'
-import { Loader2, ChevronDown } from 'lucide-react'
+import { Loader2, ChevronDown, Copy, Check } from 'lucide-react'
 import { anthropicCall } from '@/lib/ai-calls'
 import {
   Select,
@@ -54,6 +54,7 @@ export function ClaudeNode({
   const nodeId = useNodeId()
   const { getNode, getEdges, setNodes } = useReactFlow()
   const updateNodeInternals = useUpdateNodeInternals()
+  const [isCopied, setIsCopied] = useState(false)
 
   useEffect(() => {
     const checkConnections = () => {
@@ -171,6 +172,13 @@ export function ClaudeNode({
     }))
   }, [nodeId, getEdges, getNode, setNodes])
 
+  const handleCopy = useCallback(() => {
+    if (!output) return
+    navigator.clipboard.writeText(output)
+    setIsCopied(true)
+    setTimeout(() => setIsCopied(false), 2000)
+  }, [output])
+
   return (
     <div className="bg-[#D4A27F] rounded-lg p-3 min-w-[300px] shadow-md">
       <div className="relative">
@@ -268,9 +276,25 @@ export function ClaudeNode({
         </div>
 
         <div className="mt-4 border border-[#262625] rounded-lg bg-white/80 p-3">
-          <div className="font-medium text-sm text-gray-700 mb-2 flex items-center gap-2">
-            <div className={`h-2 w-2 rounded-full ${output ? 'bg-[#262625]' : 'bg-gray-400'}`} />
-            Output
+          <div className="font-medium text-sm text-gray-700 mb-2 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className={`h-2 w-2 rounded-full ${output ? 'bg-[#262625]' : 'bg-gray-400'}`} />
+              Output
+            </div>
+            {output && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 text-gray-600 hover:bg-[#262625] hover:text-white transition-colors"
+                onClick={handleCopy}
+              >
+                {isCopied ? (
+                  <Check className="h-4 w-4" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
+              </Button>
+            )}
           </div>
           <div className="p-3 bg-white rounded-md text-sm break-words w-[280px] max-h-[200px] overflow-y-auto border border-[#262625] text-black shadow-sm">
             {output || (

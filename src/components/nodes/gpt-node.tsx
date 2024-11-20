@@ -3,7 +3,7 @@
 import { useCallback, useState, useMemo, useEffect } from 'react'
 import { Handle, Position, useNodeId, useReactFlow, useUpdateNodeInternals } from '@xyflow/react'
 import { Button } from '@/components/ui/button'
-import { Loader2, ChevronDown } from 'lucide-react'
+import { Loader2, ChevronDown, Copy, Check } from 'lucide-react'
 import { openaiCall } from '@/lib/ai-calls'
 import {
   Select,
@@ -54,6 +54,7 @@ export function GPTNode({
   const nodeId = useNodeId()
   const { getNode, getEdges, setNodes } = useReactFlow()
   const updateNodeInternals = useUpdateNodeInternals()
+  const [isCopied, setIsCopied] = useState(false)
 
   useEffect(() => {
     const checkConnections = () => {
@@ -172,6 +173,13 @@ export function GPTNode({
     }
   }, [nodeId, getNode, getEdges, selectedModel, systemPrompt, maxTokens, temperature, setNodes])
 
+  const handleCopy = useCallback(() => {
+    if (!output) return
+    navigator.clipboard.writeText(output)
+    setIsCopied(true)
+    setTimeout(() => setIsCopied(false), 2000)
+  }, [output])
+
   return (
     <div className="bg-[#212121] rounded-lg p-3 min-w-[300px] shadow-md">
       <div className="relative">
@@ -267,9 +275,25 @@ export function GPTNode({
         </div>
 
         <div className="mt-4 border border-gray-600 rounded-lg bg-[#2E2E2E] p-3">
-          <div className="font-medium text-sm text-white mb-2 flex items-center gap-2">
-            <div className={`h-2 w-2 rounded-full ${output ? 'bg-white' : 'bg-gray-400'}`} />
-            Output
+          <div className="font-medium text-sm text-white mb-2 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className={`h-2 w-2 rounded-full ${output ? 'bg-white' : 'bg-gray-400'}`} />
+              Output
+            </div>
+            {output && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 text-gray-400 hover:bg-white hover:text-black transition-colors"
+                onClick={handleCopy}
+              >
+                {isCopied ? (
+                  <Check className="h-4 w-4" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
+              </Button>
+            )}
           </div>
           <div className="p-3 bg-[#2E2E2E] rounded-md text-sm break-words w-[280px] max-h-[200px] overflow-y-auto border border-gray-600 text-white shadow-sm">
             {output || (
