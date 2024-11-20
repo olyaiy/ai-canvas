@@ -11,7 +11,8 @@ import {
   addEdge,
 } from '@xyflow/react';import '@xyflow/react/dist/style.css';
 import { useState, useCallback, useMemo } from 'react';
- 
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 const nodeTypes = { textUpdater: TextUpdaterNode, promptInput: PromptInputNode, claude: ClaudeNode }
 
@@ -30,7 +31,10 @@ const initialNodes = [
     id: 'node-5',
     type: 'claude',
     position: { x: 300, y: 400 },
-    data: { },
+    data: { 
+      systemPrompt: "You are a helpful assistant",
+      output: undefined,
+    },
   },
 ];
 
@@ -68,6 +72,25 @@ export default function Flow() {
     );
   }, []);
 
+  const addClaudeNode = useCallback(() => {
+    const position = {
+      x: Math.random() * 500,
+      y: Math.random() * 500,
+    };
+
+    const newNode = {
+      id: `claude-${Date.now()}`,
+      type: 'claude',
+      position,
+      data: { 
+        systemPrompt: "You are a helpful assistant",
+        output: undefined,
+      },
+    };
+
+    setNodes((nds) => [...nds, newNode]);
+  }, []);
+
   return (
     <div style={{ height: '100%' }}>
       <ReactFlow
@@ -83,6 +106,14 @@ export default function Flow() {
         <Background />
         <Controls />
       </ReactFlow>
+      
+      <Button
+        onClick={addClaudeNode}
+        className="absolute bottom-4 right-4 bg-[#D4A27F] hover:bg-[#b88b6b] text-black"
+        size="icon"
+      >
+        <Plus className="h-4 w-4" />
+      </Button>
     </div>
   );
 }

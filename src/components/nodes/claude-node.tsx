@@ -3,7 +3,7 @@
 import { useCallback, useState, useMemo, useEffect } from 'react'
 import { Handle, Position, useNodeId, useReactFlow, useUpdateNodeInternals } from '@xyflow/react'
 import { Button } from '@/components/ui/button'
-import { Loader2 } from 'lucide-react'
+import { Loader2, ChevronDown } from 'lucide-react'
 import { anthropicCall } from '@/lib/ai-calls'
 import {
   Select,
@@ -18,7 +18,9 @@ import { Label } from "@/components/ui/label"
 interface ClaudeNodeData {
   value?: string
   model?: string
-  systemPrompt?: string
+  systemPrompt: string
+  output?: string
+  prompt?: string
 }
 
 export const CLAUDE_MODELS = {
@@ -38,20 +40,23 @@ export function ClaudeNode({
 }) {
   const [isLoading, setIsLoading] = useState(false)
   const [output, setOutput] = useState<string>('')
-  const [hasConnection, setHasConnection] = useState(false)
+  const [hasInputConnection, setHasInputConnection] = useState(false)
+  const [hasOutputConnection, setHasOutputConnection] = useState(false)
   const [selectedModel, setSelectedModel] = useState<string>('claude-3-5-haiku-latest')
   const [systemPrompt, setSystemPrompt] = useState<string>(
-    data.systemPrompt || "You are a helpful assistant"
+    data.systemPrompt ?? "You are a helpful assistant"
   )
   const nodeId = useNodeId()
-  const { getNode, getEdges } = useReactFlow()
+  const { getNode, getEdges, setNodes } = useReactFlow()
   const updateNodeInternals = useUpdateNodeInternals()
 
   useEffect(() => {
     const checkConnections = () => {
       const edges = getEdges()
-      const isConnected = edges.some(edge => edge.target === nodeId)
-      setHasConnection(isConnected)
+      const hasInput = edges.some(edge => edge.target === nodeId)
+      const hasOutput = edges.some(edge => edge.source === nodeId)
+      setHasInputConnection(hasInput)
+      setHasOutputConnection(hasOutput)
     }
 
     // Check initial connections
@@ -81,15 +86,15 @@ export function ClaudeNode({
       
       if (!incomingEdge) return
       
-      const promptNode = getNode(incomingEdge.source)
-      const prompt = promptNode?.data?.value as string
+      const sourceNode = getNode(incomingEdge.source)
+      const promptText = (sourceNode?.data?.value || sourceNode?.data?.output) as string | undefined
       
-      if (!prompt) {
-        setOutput('Error: No prompt text found')
+      if (!promptText) {
+        setOutput('Error: No input text found')
         return
       }
 
-      const stream = await anthropicCall(prompt, selectedModel as ClaudeModelType, systemPrompt)
+      const stream = await anthropicCall(promptText, selectedModel as ClaudeModelType, systemPrompt)
       
       let fullResponse = ''
       for await (const message of stream) {
@@ -98,22 +103,50 @@ export function ClaudeNode({
           setOutput(fullResponse)
         }
       }
+
+      setNodes(nodes => nodes.map(node => {
+        if (node.id === nodeId) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              output: fullResponse
+            }
+          }
+        }
+        return node
+      }))
+
     } catch (error) {
       console.error('Error:', error)
       setOutput('Error generating response')
     } finally {
       setIsLoading(false)
     }
-  }, [nodeId, getNode, getEdges, selectedModel, systemPrompt])
+  }, [nodeId, getNode, getEdges, selectedModel, systemPrompt, setNodes])
 
   return (
-    <div className="bg-white border-2 border-gray-200 rounded-lg p-3 min-w-[300px] shadow-sm">
-      <Handle
-        type="target"
-        position={Position.Top}
-        id="claude-in"
-        isConnectable={isConnectable}
-      />
+    <div className="bg-[#D4A27F] rounded-lg p-3 min-w-[300px] shadow-md">
+      <div className="relative">
+        <Handle
+          type="target"
+          position={Position.Top}
+          id="claude-in"
+          isConnectable={isConnectable}
+          className={`!w-6 !h-6 ${
+            hasInputConnection ? '!bg-[#262625]' : '!bg-gray-400'
+          } transition-colors cursor-crosshair hover:!bg-gray-600 hover:scale-110`}
+          style={{ 
+            transform: 'translate(-50%, -100%)',
+            zIndex: 100 
+          }}
+        />
+        <ChevronDown 
+          className={`absolute -top-4 left-1/2 -translate-x-1/2 w-4 h-4 pointer-events-none ${
+            hasInputConnection ? 'text-[#262625]' : 'text-gray-400'
+          } transition-colors`}
+        />
+      </div>
       
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
@@ -121,12 +154,12 @@ export function ClaudeNode({
             value={selectedModel}
             onValueChange={setSelectedModel}
           >
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[180px] bg-white/80 border-[#262625] text-black">
               <SelectValue placeholder="Select model" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-white border-[#262625] text-black">
               {Object.entries(CLAUDE_MODELS).map(([value, label]) => (
-                <SelectItem key={value} value={value}>
+                <SelectItem key={value} value={value} className="hover:bg-gray-100">
                   {label}
                 </SelectItem>
               ))}
@@ -134,9 +167,10 @@ export function ClaudeNode({
           </Select>
           <Button 
             onClick={handleGenerate}
-            disabled={isLoading || !hasConnection}
+            disabled={isLoading || !hasInputConnection}
             size="sm"
-            variant={!hasConnection ? "ghost" : "default"}
+            variant={!hasInputConnection ? "ghost" : "default"}
+            className="bg-[#262625] hover:bg-gray-700 text-white disabled:bg-gray-400"
           >
             {isLoading ? (
               <Loader2 className="w-4 h-4 animate-spin mr-2" />
@@ -146,36 +180,50 @@ export function ClaudeNode({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="systemPrompt">System Prompt</Label>
+          <Label htmlFor="systemPrompt" className="text-black">System Prompt</Label>
           <Textarea
             id="systemPrompt"
             value={systemPrompt}
             onChange={(e) => setSystemPrompt(e.target.value)}
             placeholder="Enter system prompt..."
-            className="resize-none min-h-[24px] max-h-[96px] overflow-y-auto"
+            className="resize-none min-h-[24px] max-h-[96px] overflow-y-auto bg-white/80 border-[#262625] text-black placeholder:text-gray-500"
             rows={1}
           />
         </div>
 
-        <div className="mt-4 border rounded-lg bg-gray-50 p-3">
+        <div className="mt-4 border border-[#262625] rounded-lg bg-white/80 p-3">
           <div className="font-medium text-sm text-gray-700 mb-2 flex items-center gap-2">
-            <div className={`h-2 w-2 rounded-full ${output ? 'bg-green-500' : 'bg-gray-400'}`} />
+            <div className={`h-2 w-2 rounded-full ${output ? 'bg-[#262625]' : 'bg-gray-400'}`} />
             Output
           </div>
-          <div className="p-3 bg-white rounded-md text-sm whitespace-pre-wrap max-w-[500px] h-[100px] overflow-auto border border-gray-100 shadow-sm">
+          <div className="p-3 bg-white rounded-md text-sm whitespace-pre-wrap max-w-[500px] h-[100px] overflow-auto border border-[#262625] text-black shadow-sm">
             {output || (
-              <span className="text-gray-400 italic">No output generated yet</span>
+              <span className="text-gray-500 italic">No output generated yet</span>
             )}
           </div>
         </div>
       </div>
 
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        id="claude-out"
-        isConnectable={isConnectable}
-      />
+      <div className="relative">
+        <Handle
+          type="source"
+          position={Position.Bottom}
+          id="claude-out"
+          isConnectable={isConnectable}
+          className={`!w-6 !h-6 ${
+            hasOutputConnection ? '!bg-[#262625]' : '!bg-gray-400'
+          } transition-colors cursor-crosshair hover:!bg-gray-600 hover:scale-110`}
+          style={{ 
+            transform: 'translate(-50%, 100%)',
+            zIndex: 100 
+          }}
+        />
+        <ChevronDown 
+          className={`absolute -bottom-4 left-1/2 -translate-x-1/2 w-4 h-4 pointer-events-none ${
+            hasOutputConnection ? 'text-[#262625]' : 'text-gray-400'
+          } transition-colors`}
+        />
+      </div>
     </div>
   )
 } 
