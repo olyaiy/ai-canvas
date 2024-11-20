@@ -14,13 +14,14 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
+import { Slider } from "@/components/ui/slider"
 
 interface ClaudeNodeData {
   value?: string
-  model?: string
+  model?: ClaudeModelType
   systemPrompt: string
-  output?: string
-  prompt?: string
+  temperature: number
+  maxTokens: number
 }
 
 export const CLAUDE_MODELS = {
@@ -42,9 +43,13 @@ export function ClaudeNode({
   const [output, setOutput] = useState<string>('')
   const [hasInputConnection, setHasInputConnection] = useState(false)
   const [hasOutputConnection, setHasOutputConnection] = useState(false)
-  const [selectedModel, setSelectedModel] = useState<string>('claude-3-5-haiku-latest')
+  const [selectedModel, setSelectedModel] = useState<ClaudeModelType>('claude-3-5-haiku-latest')
   const [systemPrompt, setSystemPrompt] = useState<string>(
     data.systemPrompt ?? "You are a helpful assistant"
+  )
+  const [temperature, setTemperature] = useState<number>(data.temperature ?? 0.4)
+  const [maxTokens, setMaxTokens] = useState<number>(
+    data.maxTokens ?? (selectedModel.includes('opus') ? 4096 : 8192)
   )
   const nodeId = useNodeId()
   const { getNode, getEdges, setNodes } = useReactFlow()
@@ -76,6 +81,12 @@ export function ClaudeNode({
     return () => observer.disconnect()
   }, [nodeId, getEdges])
 
+  // Update maxTokens when model changes
+  useEffect(() => {
+    const defaultMaxTokens = selectedModel.includes('opus') ? 4096 : 8192
+    setMaxTokens(prev => Math.min(prev, defaultMaxTokens))
+  }, [selectedModel])
+
   const handleGenerate = useCallback(async () => {
     setIsLoading(true)
     setOutput('')
@@ -87,14 +98,20 @@ export function ClaudeNode({
       if (!incomingEdge) return
       
       const sourceNode = getNode(incomingEdge.source)
-      const promptText = (sourceNode?.data?.value || sourceNode?.data?.output) as string | undefined
+      const promptText = sourceNode?.data?.value as string
       
-      if (!promptText) {
-        setOutput('Error: No input text found')
+      if (!promptText || typeof promptText !== 'string') {
+        setOutput('Error: No valid input text found')
         return
       }
 
-      const stream = await anthropicCall(promptText, selectedModel as ClaudeModelType, systemPrompt)
+      const stream = await anthropicCall(
+        promptText, 
+        selectedModel, 
+        systemPrompt,
+        maxTokens,
+        temperature
+      )
       
       let fullResponse = ''
       for await (const message of stream) {
@@ -110,7 +127,7 @@ export function ClaudeNode({
             ...node,
             data: {
               ...node.data,
-              output: fullResponse
+              value: fullResponse
             }
           }
         }
@@ -123,7 +140,36 @@ export function ClaudeNode({
     } finally {
       setIsLoading(false)
     }
-  }, [nodeId, getNode, getEdges, selectedModel, systemPrompt, setNodes])
+  }, [nodeId, getNode, getEdges, selectedModel, systemPrompt, maxTokens, temperature, setNodes])
+
+  // Create a memoized version of getInputValue that updates when needed
+  const getInputValue = useMemo(() => {
+    const edges = getEdges()
+    const incomingEdge = edges.find(edge => edge.target === nodeId)
+    const sourceNode = incomingEdge ? getNode(incomingEdge.source) : null
+    return String(sourceNode?.data?.value || "undefined")
+  }, [nodeId, getEdges, getNode]) // Add dependencies that should trigger a recalculation
+
+  // Add this useEffect to update node data when input changes
+  useEffect(() => {
+    const edges = getEdges()
+    const incomingEdge = edges.find(edge => edge.target === nodeId)
+    const sourceNode = incomingEdge ? getNode(incomingEdge.source) : null
+    const inputValue = sourceNode?.data?.value
+
+    setNodes(nodes => nodes.map(node => {
+      if (node.id === nodeId) {
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            inputValue // Store the input value in the node's data
+          }
+        }
+      }
+      return node
+    }))
+  }, [nodeId, getEdges, getNode, setNodes])
 
   return (
     <div className="bg-[#D4A27F] rounded-lg p-3 min-w-[300px] shadow-md">
@@ -152,7 +198,7 @@ export function ClaudeNode({
         <div className="flex items-center justify-between">
           <Select
             value={selectedModel}
-            onValueChange={setSelectedModel}
+            onValueChange={(value) => setSelectedModel(value as ClaudeModelType)}
           >
             <SelectTrigger className="w-[180px] bg-white/80 border-[#262625] text-black">
               <SelectValue placeholder="Select model" />
@@ -191,12 +237,42 @@ export function ClaudeNode({
           />
         </div>
 
+        <div className="space-y-4">
+          {/* Temperature Slider */}
+          <div className="space-y-2">
+            <Label className="text-black">Temperature: {temperature.toFixed(2)}</Label>
+            <Slider
+              value={[temperature]}
+              onValueChange={([value]) => setTemperature(value)}
+              max={1}
+              min={0}
+              step={0.01}
+              className="w-full"
+            />
+          </div>
+
+          {/* Max Tokens Slider */}
+          <div className="space-y-2">
+            <Label className="text-black">
+              Max Tokens: {maxTokens}
+            </Label>
+            <Slider
+              value={[maxTokens]}
+              onValueChange={([value]) => setMaxTokens(value)}
+              max={selectedModel.includes('opus') ? 4096 : 8192}
+              min={1}
+              step={1}
+              className="w-full"
+            />
+          </div>
+        </div>
+
         <div className="mt-4 border border-[#262625] rounded-lg bg-white/80 p-3">
           <div className="font-medium text-sm text-gray-700 mb-2 flex items-center gap-2">
             <div className={`h-2 w-2 rounded-full ${output ? 'bg-[#262625]' : 'bg-gray-400'}`} />
             Output
           </div>
-          <div className="p-3 bg-white rounded-md text-sm whitespace-pre-wrap max-w-[500px] h-[100px] overflow-auto border border-[#262625] text-black shadow-sm">
+          <div className="p-3 bg-white rounded-md text-sm break-words w-[280px] max-h-[200px] overflow-y-auto border border-[#262625] text-black shadow-sm">
             {output || (
               <span className="text-gray-500 italic">No output generated yet</span>
             )}

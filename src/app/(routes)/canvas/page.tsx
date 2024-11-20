@@ -34,6 +34,8 @@ const initialNodes = [
     data: { 
       systemPrompt: "You are a helpful assistant",
       output: undefined,
+      temperature: 0.4,
+      maxTokens: 8192,
     },
   },
 ];
@@ -85,6 +87,8 @@ export default function Flow() {
       data: { 
         systemPrompt: "You are a helpful assistant",
         output: undefined,
+        temperature: 0.4,
+        maxTokens: 8192,
       },
     };
 
