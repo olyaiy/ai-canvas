@@ -14,9 +14,13 @@ import {
 import { useState, useCallback, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { AnimatedEdge } from '@/components/edges/animated-edge'
 
 const nodeTypes = { textUpdater: TextUpdaterNode, promptInput: PromptInputNode, claude: ClaudeNode, gpt: GPTNode }
 
+const edgeTypes = {
+  default: AnimatedEdge,
+}
 
 const initialNodes = [
   {
@@ -145,6 +149,8 @@ export default function Flow() {
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
+        defaultEdgeOptions={{ type: 'default' }}
         nodesDraggable
         proOptions={{ hideAttribution: true }}
       >
