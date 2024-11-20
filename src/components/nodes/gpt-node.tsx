@@ -25,8 +25,8 @@ interface GPTNodeData {
 }
 
 export const GPT_MODELS = {
-  'gpt-4o-mini': 'GPT-4O Mini',
-  'gpt-4o': 'GPT-4O',
+  'gpt-4o-mini': 'GPT-4o Mini',
+  'gpt-4o': 'GPT-4o',
   'gpt-4-turbo': 'GPT-4 Turbo',
   'o1-mini': 'O1 Mini',
   'o1-preview': 'O1 Preview'
