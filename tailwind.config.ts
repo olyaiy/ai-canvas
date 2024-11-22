@@ -55,8 +55,31 @@ export default {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
   			sm: 'calc(var(--radius) - 4px)'
-  		}
+  		},
+  		keyframes: {
+  			glowIn: {
+  				'0%': {
+  					'box-shadow': '0 0 0px rgba(59,130,246,0)',
+  				},
+  				'100%': {
+  					'box-shadow': '0 0 20px rgba(59,130,246,0.9)',
+  				},
+  			},
+  			glowOut: {
+  				'0%': {
+  					'box-shadow': '0 0 20px rgba(59,130,246,0.9)',
+  				},
+  				'100%': {
+  					'box-shadow': '0 0 0px rgba(59,130,246,0)',
+  				},
+  			}
+  		},
+  		animation: {
+  			'glow-in': 'glowIn 0.2s ease-out forwards',
+  			'glow-out': 'glowOut 0.2s ease-in forwards',
+  		},
   	}
   },
   plugins: [require("tailwindcss-animate")],
 } satisfies Config;
+

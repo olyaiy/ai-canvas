@@ -10,6 +10,8 @@ import {
   applyNodeChanges,
   applyEdgeChanges,
   addEdge,
+  Node,
+  NodeMouseHandler,
 } from '@xyflow/react';import '@xyflow/react/dist/style.css';
 import { useState, useCallback, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
@@ -69,6 +71,7 @@ const initialEdges = [
 export default function Flow() {
   const [nodes, setNodes] = useState(initialNodes);
   const [edges, setEdges] = useState(initialEdges);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 
   const onNodesChange = useCallback(
     (changes: any) => setNodes((nds) => applyNodeChanges(changes, nds)),
@@ -158,14 +161,34 @@ export default function Flow() {
     setNodes((nds) => [...nds, newNode]);
   }, []);
 
+  const onNodeClick: NodeMouseHandler = useCallback((event, node) => {
+    event.stopPropagation();
+    setSelectedNodeId(node.id);
+  }, []);
+
+  const onPaneClick = useCallback(() => {
+    setSelectedNodeId(null);
+  }, []);
+
+  const nodesWithSelection = useMemo(() => {
+    return nodes.map((node) => ({
+      ...node,
+      className: node.id === selectedNodeId 
+        ? 'ring-2 ring-blue-500 ring-offset-2 animate-glow-in transition-all duration-200 ease-in-out'
+        : 'animate-glow-out transition-all duration-200 ease-in-out',
+    }));
+  }, [nodes, selectedNodeId]);
+
   return (
     <div style={{ height: '100%' }}>
       <ReactFlow
-        nodes={nodes}
+        nodes={nodesWithSelection}
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onNodeClick={onNodeClick}
+        onPaneClick={onPaneClick}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         defaultEdgeOptions={{ type: 'default' }}
