@@ -11,9 +11,10 @@ interface PromptInputNodeProps {
   data: {
     value: string;
   };
+  isConnectable: boolean;
 }
 
-export function PromptInputNode({ id, data }: PromptInputNodeProps) {
+export function PromptInputNode({ id, data, isConnectable }: PromptInputNodeProps) {
   const { setNodes } = useReactFlow();
 
   const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -59,14 +60,26 @@ export function PromptInputNode({ id, data }: PromptInputNodeProps) {
           Run Prompt
         </Button>
       </div>
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        id="prompt-out"
-        className="!w-6 !h-6 !bg-blue-500 !border-2 !border-blue-600 !flex !items-center !justify-center"
-      >
-        <ChevronDown className="w-4 h-4 text-white" />
-      </Handle>
+
+      <div className="relative">
+        <Handle
+          type="source"
+          position={Position.Bottom}
+          id="prompt-out"
+          isConnectable={isConnectable}
+          className={`!w-8 !h-8 !bg-blue-500 !transition-all !duration-150 
+            cursor-grab active:cursor-grabbing hover:!bg-blue-600
+            before:!absolute before:!inset-0 before:!rounded-full before:!transition-all before:!duration-150
+            hover:before:!ring-2 hover:before:!ring-blue-500 hover:before:!ring-offset-2 hover:before:!ring-offset-white
+            !flex !items-center !justify-center`}
+          style={{ 
+            transform: 'translate(-50%, 100%)',
+            zIndex: 100 
+          }}
+        >
+          <ChevronDown className="w-5 h-5 text-white" />
+        </Handle>
+      </div>
     </div>
   )
 } 

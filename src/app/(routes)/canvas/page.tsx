@@ -140,6 +140,24 @@ export default function Flow() {
     setNodes((nds) => [...nds, newNode]);
   }, []);
 
+  const addPromptNode = useCallback(() => {
+    const position = {
+      x: Math.random() * 500,
+      y: Math.random() * 500,
+    };
+
+    const newNode = {
+      id: `prompt-${Date.now()}`,
+      type: 'promptInput',
+      position,
+      data: { 
+        value: "Enter your prompt here..."
+      },
+    };
+
+    setNodes((nds) => [...nds, newNode]);
+  }, []);
+
   return (
     <div style={{ height: '100%' }}>
       <ReactFlow
@@ -159,6 +177,13 @@ export default function Flow() {
       </ReactFlow>
       
       <div className="absolute bottom-4 right-4 flex gap-2">
+        <Button
+          onClick={addPromptNode}
+          className="bg-blue-500 hover:bg-blue-600 text-white flex items-center gap-2"
+        >
+          <Plus className="h-4 w-4" />
+          <span>New Prompt</span>
+        </Button>
         <Button
           onClick={addGPTNode}
           className="bg-[#10a37f] hover:bg-[#0d8a6c] text-white flex items-center gap-2"
