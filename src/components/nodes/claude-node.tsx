@@ -32,6 +32,12 @@ export const CLAUDE_MODELS = {
 
 export type ClaudeModelType = keyof typeof CLAUDE_MODELS;
 
+// Add this helper function before the ClaudeNode component
+function truncateText(text: string, maxLength: number) {
+  if (!text) return '';
+  return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
+}
+
 export function ClaudeNode({ 
   data, 
   isConnectable 
@@ -55,6 +61,7 @@ export function ClaudeNode({
   const { getNode, getEdges, setNodes } = useReactFlow()
   const updateNodeInternals = useUpdateNodeInternals()
   const [isCopied, setIsCopied] = useState(false)
+  const [inputPreview, setInputPreview] = useState<{ text: string; nodeId: string } | null>(null);
 
   useEffect(() => {
     const checkConnections = () => {
@@ -63,6 +70,22 @@ export function ClaudeNode({
       const hasOutput = edges.some(edge => edge.source === nodeId)
       setHasInputConnection(hasInput)
       setHasOutputConnection(hasOutput)
+
+      // Get input preview
+      const incomingEdge = edges.find(edge => edge.target === nodeId)
+      if (incomingEdge) {
+        const sourceNode = getNode(incomingEdge.source)
+        if (sourceNode?.data?.value) {
+          setInputPreview({
+            text: truncateText(String(sourceNode.data.value), 150),
+            nodeId: sourceNode.id
+          })
+        } else {
+          setInputPreview(null)
+        }
+      } else {
+        setInputPreview(null)
+      }
     }
 
     // Check initial connections
@@ -80,7 +103,7 @@ export function ClaudeNode({
     }
 
     return () => observer.disconnect()
-  }, [nodeId, getEdges])
+  }, [nodeId, getEdges, getNode])
 
   // Update maxTokens when model changes
   useEffect(() => {
@@ -274,6 +297,18 @@ export function ClaudeNode({
             />
           </div>
         </div>
+
+        {/* Input Preview - Now positioned between sliders and output */}
+        {inputPreview && (
+          <div className="space-y-1">
+            <div className="text-xs font-medium text-gray-700">
+              Input from {inputPreview.nodeId}:
+            </div>
+            <div className="text-sm bg-white/80 border border-[#262625] rounded-md p-2 text-gray-600">
+              {inputPreview.text}
+            </div>
+          </div>
+        )}
 
         <div className="mt-4 border border-[#262625] rounded-lg bg-white/80 p-3">
           <div className="font-medium text-sm text-gray-700 mb-2 flex items-center justify-between">

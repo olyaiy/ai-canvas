@@ -11,6 +11,7 @@ import { createNewProject, deleteProject } from './(routes)/canvas/actions'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
+import { NewProjectDialog } from '@/components/new-project-dialog'
 
 async function getRecentProjects(userId: string, page = 1, pageSize = 4) {
   const supabase = await createClient()
@@ -102,33 +103,7 @@ export default async function Page({
         <div className="space-y-6">
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-bold">Recent Projects</h2>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button className="flex items-center gap-2">
-                  <Plus className="h-4 w-4" />
-                  New Project
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Create New Project</DialogTitle>
-                </DialogHeader>
-                <form action={createNewProject} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Project Name</Label>
-                    <Input
-                      id="name"
-                      name="name"
-                      placeholder="My Amazing Flow"
-                      required
-                    />
-                  </div>
-                  <Button type="submit" className="w-full">
-                    Create Project
-                  </Button>
-                </form>
-              </DialogContent>
-            </Dialog>
+            <NewProjectDialog />
           </div>
           
           <div className="space-y-4">

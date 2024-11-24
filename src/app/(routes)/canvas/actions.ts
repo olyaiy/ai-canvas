@@ -34,9 +34,8 @@ export async function createNewProject(formData: FormData) {
   
   const supabase = await createClient()
   
-  // Get the current user
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  if (!user) throw new Error('Not authenticated')
 
   const newProject = {
     name: (formData.get('name') as string) || 'Untitled Flow',
@@ -57,8 +56,7 @@ export async function createNewProject(formData: FormData) {
     .single()
 
   if (error) {
-    console.error('Error creating project:', error)
-    redirect('/error')
+    throw new Error('Failed to create project')
   }
 
   revalidatePath('/')
