@@ -34,7 +34,7 @@ export const CLAUDE_MODELS = {
 export type ClaudeModelType = keyof typeof CLAUDE_MODELS;
 
 // Add this helper function before the ClaudeNode component
-function truncateText(text: string, maxLength: number) {
+function truncateText(text: string, maxLength: number = 100) {
   if (!text) return '';
   return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
 }
@@ -329,14 +329,19 @@ export function ClaudeNode({
                   className="text-sm bg-white/80 border border-[#262625] rounded-md p-2 text-gray-600"
                 >
                   <div className="text-xs font-medium text-gray-700 mb-1">
-                    From {preview.nodeId}:
+                    From: {getNode(preview.nodeId)?.data?.name || 'Unnamed Node'}
+                    <span className="text-[10px] text-gray-400 block">
+                      ID: {preview.nodeId}
+                    </span>
                   </div>
-                  {preview.text}
+                  <div className="w-[280px]">
+                    {truncateText(preview.text, 100)}
+                  </div>
                 </div>
               ))
             ) : (
               <div className="text-sm bg-white/80 border border-[#262625] rounded-md p-2 text-gray-500 italic">
-                No input connected
+                <div className="w-[280px]">No input connected</div>
               </div>
             )}
           </div>
