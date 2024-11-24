@@ -15,7 +15,6 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
-
 interface ClaudeNodeData {
   value?: string
   model?: ClaudeModelType
@@ -101,20 +100,30 @@ export function ClaudeNode({
     
     try {
       const edges = getEdges()
-      const incomingEdge = edges.find(edge => edge.target === nodeId)
+      const incomingEdges = edges.filter(edge => edge.target === nodeId)
       
-      if (!incomingEdge) return
+      if (incomingEdges.length === 0) return
       
-      const sourceNode = getNode(incomingEdge.source)
-      const promptText = sourceNode?.data?.value as string
+      // Collect all input texts from connected nodes
+      const inputTexts = incomingEdges.map(edge => {
+        const sourceNode = getNode(edge.source)
+        return sourceNode?.data?.value as string
+      }).filter(text => text && typeof text === 'string')
       
-      if (!promptText || typeof promptText !== 'string') {
-        setOutput('Error: No valid input text found')
+      if (inputTexts.length === 0) {
+        setOutput('Error: No valid input texts found')
         return
       }
 
+      // Combine all inputs with numbers
+      const combinedPrompt = inputTexts
+        .map((text, index) => `Prompt ${index + 1}:\n${text}`)
+        .join('\n\n')
+
+      console.log('COMBINED PROMPT IS', combinedPrompt);
+
       const stream = await anthropicCall(
-        promptText, 
+        combinedPrompt, 
         selectedModel, 
         systemPrompt,
         maxTokens,

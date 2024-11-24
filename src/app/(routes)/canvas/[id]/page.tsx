@@ -3,9 +3,9 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 
 interface PageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 async function getProject(projectId: string | undefined) {
@@ -35,8 +35,9 @@ async function getProject(projectId: string | undefined) {
 }
 
 export default async function Page({ params }: PageProps) {
-  const projectId = params.id as string
-  const project = await getProject(projectId)
+  // Await and destructure the params
+  const { id } = await params
+  const project = await getProject(id)
   
   if (!project) {
     redirect('/')
@@ -46,7 +47,7 @@ export default async function Page({ params }: PageProps) {
     <div className="w-full h-screen flex flex-col overflow-hidden">
       {/* Project Header */}
       <div className="p-4 border-b">
-        <h1 className="text-2xl font-bold">{project.naame}</h1>
+        <h1 className="text-2xl font-bold">{project.name}</h1>
         <p className="text-sm text-muted-foreground">
           Last updated: {new Date(project.updated_at).toLocaleDateString()}
         </p>
@@ -57,7 +58,7 @@ export default async function Page({ params }: PageProps) {
         <Flow 
           initialFlowData={project.flow_data} 
           projectName={project.name}
-          projectId={projectId}
+          projectId={id}
         />
       </div>
     </div>
