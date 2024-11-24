@@ -222,12 +222,13 @@ export default function Flow({ initialFlowData, projectName, projectId, isPrevie
     try {
       const formData = new FormData();
       formData.append('name', projectName);
+      formData.append('projectId', projectId);
       formData.append('flow_data', JSON.stringify({ nodes, edges }));
       await saveProject(formData);
     } finally {
       setIsSaving(false);
     }
-  }, [nodes, edges, projectName]);
+  }, [nodes, edges, projectName, projectId]);
 
   const router = useRouter();
 

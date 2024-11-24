@@ -11,22 +11,30 @@ export async function saveProject(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  // Get the project ID from the formData
+  const projectId = formData.get('projectId') as string
+
   const projectData = {
     name: formData.get('name') as string,
     flow_data: JSON.parse(formData.get('flow_data') as string),
-    user_id: user.id,
+    updated_at: new Date().toISOString(),
   }
 
+  // Update existing project instead of creating new one
   const { error } = await supabase
     .from('flow_projects')
-    .insert(projectData)
+    .update(projectData)
+    .eq('id', projectId)
+    .eq('user_id', user.id)
 
   if (error) {
     console.error('Error saving project:', error)
     redirect('/error')
   }
 
-  revalidatePath('/canvas')
+  // Revalidate both paths
+  revalidatePath('/')
+  revalidatePath(`/canvas/${projectId}`)
 }
 
 export async function createNewProject(formData: FormData) {
