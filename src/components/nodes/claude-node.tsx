@@ -61,7 +61,7 @@ export function ClaudeNode({
   const { getNode, getEdges, setNodes } = useReactFlow()
   const updateNodeInternals = useUpdateNodeInternals()
   const [isCopied, setIsCopied] = useState(false)
-  const [inputPreview, setInputPreview] = useState<{ text: string; nodeId: string } | null>(null);
+  const [inputPreviews, setInputPreviews] = useState<Array<{ text: string; nodeId: string }>>([]);
 
   useEffect(() => {
     const checkConnections = () => {
@@ -71,29 +71,21 @@ export function ClaudeNode({
       setHasInputConnection(hasInput)
       setHasOutputConnection(hasOutput)
 
-      // Get input preview from the source node's current data
-      const incomingEdge = edges.find(edge => edge.target === nodeId)
-      if (incomingEdge) {
-        const sourceNode = getNode(incomingEdge.source)
-        if (sourceNode?.data?.value) {
-          setInputPreview({
-            text: truncateText(String(sourceNode.data.value), 150),
-            nodeId: sourceNode.id
-          })
-        } else {
-          setInputPreview(null)
-        }
-      } else {
-        setInputPreview(null)
-      }
+      // Get input previews from all source nodes
+      const incomingEdges = edges.filter(edge => edge.target === nodeId)
+      const previews = incomingEdges.map(edge => {
+        const sourceNode = getNode(edge.source)
+        return sourceNode?.data?.value ? {
+          text: truncateText(String(sourceNode.data.value), 150),
+          nodeId: sourceNode.id
+        } : null
+      }).filter(Boolean)
+
+      setInputPreviews(previews)
     }
 
-    // Check connections and update preview
     checkConnections()
-
-    // Subscribe to changes in the flow
-    const interval = setInterval(checkConnections, 100) // Poll for updates
-
+    const interval = setInterval(checkConnections, 100)
     return () => clearInterval(interval)
   }, [nodeId, getEdges, getNode])
 
@@ -290,17 +282,29 @@ export function ClaudeNode({
           </div>
         </div>
 
-        {/* Input Preview - Now positioned between sliders and output */}
-        {inputPreview && (
-          <div className="space-y-1">
-            <div className="text-xs font-medium text-gray-700">
-              Input from {inputPreview.nodeId}:
-            </div>
-            <div className="text-sm bg-white/80 border border-[#262625] rounded-md p-2 text-gray-600">
-              {inputPreview.text}
-            </div>
+        {/* Input Previews Section */}
+        <div className="space-y-2">
+          <div className="text-xs font-medium text-gray-700">
+            Inputs:
           </div>
-        )}
+          {inputPreviews.length > 0 ? (
+            inputPreviews.map((preview, index) => (
+              <div 
+                key={preview.nodeId} 
+                className="text-sm bg-white/80 border border-[#262625] rounded-md p-2 text-gray-600"
+              >
+                <div className="text-xs font-medium text-gray-700 mb-1">
+                  From {preview.nodeId}:
+                </div>
+                {preview.text}
+              </div>
+            ))
+          ) : (
+            <div className="text-sm bg-white/80 border border-[#262625] rounded-md p-2 text-gray-500 italic">
+              No input connected
+            </div>
+          )}
+        </div>
 
         <div className="mt-4 border border-[#262625] rounded-lg bg-white/80 p-3">
           <div className="font-medium text-sm text-gray-700 mb-2 flex items-center justify-between">
