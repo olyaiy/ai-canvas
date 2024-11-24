@@ -29,3 +29,39 @@ export async function saveProject(formData: FormData) {
   revalidatePath('/canvas')
   redirect('/canvas')
 }
+
+export async function createNewProject(formData: FormData) {
+  'use server'
+  
+  const supabase = await createClient()
+  
+  // Get the current user
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const newProject = {
+    name: (formData.get('name') as string) || 'Untitled Flow',
+    description: '',
+    flow_data: {
+      nodes: [],
+      edges: []
+    },
+    user_id: user.id,
+    is_public: false,
+    version: 1
+  }
+
+  const { data, error } = await supabase
+    .from('flow_projects')
+    .insert(newProject)
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error creating project:', error)
+    redirect('/error')
+  }
+
+  revalidatePath('/')
+  redirect(`/canvas/${data.id}`)
+}

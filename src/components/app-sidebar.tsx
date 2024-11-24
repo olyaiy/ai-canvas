@@ -47,6 +47,10 @@ export function AppSidebar() {
     router.push('/login')
   }
 
+  const handleNavigation = () => {
+    router.push('/')
+  }
+
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed)
   }
@@ -88,7 +92,8 @@ export function AppSidebar() {
                         className={cn(
                           "w-full justify-center  transition-all duration-200 ease-in-out",
                           isCollapsed && "justify-center pl-6"
-                        )}>
+                        )}
+                        onClick={handleNavigation}>
                         <item.icon className={cn("h-6 w-6", isCollapsed ? "mx-auto" : "mr-2")} />
                         <motion.span
                           initial={false}
