@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useState, useMemo, useEffect } from 'react'
+import { useCallback, useState, useMemo, useEffect, useRef } from 'react'
 import { Handle, Position, useNodeId, useReactFlow, useUpdateNodeInternals } from '@xyflow/react'
 import { Button } from '@/components/ui/button'
 import { Loader2, ChevronDown, Copy, Check, ChevronUp, Expand } from 'lucide-react'
@@ -67,6 +67,7 @@ export function ClaudeNode({
   const [nodeName, setNodeName] = useState<string>(data.name ?? "Claude Agent")
   const [isCollapsed, setIsCollapsed] = useState(data.isCollapsed ?? false)
   const [isSystemPromptExpanded, setIsSystemPromptExpanded] = useState(false)
+  const outputRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const checkConnections = () => {
@@ -99,6 +100,12 @@ export function ClaudeNode({
     const defaultMaxTokens = selectedModel.includes('opus') ? 4096 : 8192
     setMaxTokens(prev => Math.min(prev, defaultMaxTokens))
   }, [selectedModel])
+
+  const scrollToBottom = useCallback(() => {
+    if (outputRef.current) {
+      outputRef.current.scrollTop = outputRef.current.scrollHeight
+    }
+  }, [])
 
   const handleGenerate = useCallback(async () => {
     setIsLoading(true)
@@ -141,6 +148,7 @@ export function ClaudeNode({
         if (message.type === 'content_block_delta' && message.delta.type === 'text_delta') {
           fullResponse += message.delta.text
           setOutput(fullResponse)
+          setTimeout(scrollToBottom, 0)
         }
       }
 
@@ -163,7 +171,7 @@ export function ClaudeNode({
     } finally {
       setIsLoading(false)
     }
-  }, [nodeId, getNode, getEdges, selectedModel, systemPrompt, maxTokens, temperature, setNodes])
+  }, [nodeId, getNode, getEdges, selectedModel, systemPrompt, maxTokens, temperature, setNodes, scrollToBottom])
 
   // Create a memoized version of getInputValue that updates when needed
   const getInputValue = useMemo(() => {
@@ -412,7 +420,10 @@ export function ClaudeNode({
                   </Button>
                 )}
               </div>
-              <div className="p-3 bg-white rounded-md text-sm break-words w-[280px] max-h-[200px] overflow-y-auto border border-[#262625] text-black shadow-sm">
+              <div 
+                ref={outputRef}
+                className="p-3 bg-white rounded-md text-sm break-words w-[280px] max-h-[200px] overflow-y-auto border border-[#262625] text-black shadow-sm"
+              >
                 {output || (
                   <span className="text-gray-500 italic">No output generated yet</span>
                 )}
