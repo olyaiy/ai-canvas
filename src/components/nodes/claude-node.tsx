@@ -324,7 +324,7 @@ export function ClaudeNode({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="absolute top-1 right-1 h-6 w-6 p-0 hover:bg-gray-100 dark:hover:bg-grey-100 dark:text-gray-900 text-gray-600 "
+                  className="absolute top-1 right-1 h-6 w-6 p-0 bg-black text-white hover:bg-grey-800 dark:hover:bg-gray-800 dark:hover:text-gray-100 "
                   onClick={() => setIsSystemPromptExpanded(!isSystemPromptExpanded)}
                 >
                   <Expand className={`h-4 w-4 transition-transform ${isSystemPromptExpanded ? 'rotate-180' : ''}`} />

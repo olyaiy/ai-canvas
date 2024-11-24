@@ -17,7 +17,7 @@ export async function anthropicCall(
 ) {
 
   console.log('anthropicCall PROMPT IS', prompt,);
-  const hiddenSystemPrompt = `You are a component in an agentric system. Do not make references to yourself or your capabilities unless specifically asked. Focus solely on executing the instructions provided in the user's system prompt. Here is your assigned role and instructions: ${systemPrompt}`;
+  const hiddenSystemPrompt = `You are a component in an agentric system. Do not make references to yourself or your capabilities unless specifically asked. Focus solely on executing the instructions provided in the user's system prompt. Do not ask for clarification or more information. Here is your assigned role and instructions: ${systemPrompt}`;
 
   const defaultMaxTokens = model.includes('opus') ? 4096 : 8192;
   const finalMaxTokens = maxTokens ?? defaultMaxTokens;
