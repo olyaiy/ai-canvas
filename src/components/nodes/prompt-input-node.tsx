@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback } from 'react'
+import { useCallback, useState, useEffect } from 'react'
 import { Handle, Position } from '@xyflow/react'
 import { ChevronDown } from 'lucide-react'
 import { Button } from "@/components/ui/button"
@@ -16,8 +16,16 @@ interface PromptInputNodeProps {
 
 export function PromptInputNode({ id, data, isConnectable }: PromptInputNodeProps) {
   const { setNodes } = useReactFlow();
+  const [prompt, setPrompt] = useState(data.value);
+
+  useEffect(() => {
+    setPrompt(data.value);
+  }, [data.value]);
 
   const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newValue = evt.target.value;
+    setPrompt(newValue);
+    
     setNodes((nodes) =>
       nodes.map((node) => {
         if (node.id === id) {
@@ -25,7 +33,7 @@ export function PromptInputNode({ id, data, isConnectable }: PromptInputNodeProp
             ...node,
             data: {
               ...node.data,
-              value: evt.target.value,
+              value: newValue,
             },
           };
         }
@@ -50,7 +58,7 @@ export function PromptInputNode({ id, data, isConnectable }: PromptInputNodeProp
           placeholder="Enter your prompt here..."
           onChange={onChange}
           className="nodrag p-2 text-sm border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-          defaultValue={data.value}
+          value={prompt}
         />
         
         <Button 

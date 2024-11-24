@@ -71,7 +71,7 @@ export function ClaudeNode({
       setHasInputConnection(hasInput)
       setHasOutputConnection(hasOutput)
 
-      // Get input preview
+      // Get input preview from the source node's current data
       const incomingEdge = edges.find(edge => edge.target === nodeId)
       if (incomingEdge) {
         const sourceNode = getNode(incomingEdge.source)
@@ -88,21 +88,13 @@ export function ClaudeNode({
       }
     }
 
-    // Check initial connections
+    // Check connections and update preview
     checkConnections()
 
-    // Create a mutation observer to watch for changes in the DOM
-    const observer = new MutationObserver(checkConnections)
-    const flowElement = document.querySelector('.react-flow__edges')
-    
-    if (flowElement) {
-      observer.observe(flowElement, {
-        childList: true,
-        subtree: true
-      })
-    }
+    // Subscribe to changes in the flow
+    const interval = setInterval(checkConnections, 100) // Poll for updates
 
-    return () => observer.disconnect()
+    return () => clearInterval(interval)
   }, [nodeId, getEdges, getNode])
 
   // Update maxTokens when model changes
