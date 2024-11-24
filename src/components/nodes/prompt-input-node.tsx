@@ -1,10 +1,9 @@
 'use client'
 
 import { useCallback, useState, useEffect } from 'react'
-import { Handle, Position } from '@xyflow/react'
-import { ChevronDown } from 'lucide-react'
+import { Handle, Position, useReactFlow } from '@xyflow/react'
+import { ChevronDown, Loader2 } from 'lucide-react'
 import { Button } from "@/components/ui/button"
-import { useReactFlow } from '@xyflow/react'
 
 interface PromptInputNodeProps {
   id: string;
@@ -15,8 +14,9 @@ interface PromptInputNodeProps {
 }
 
 export function PromptInputNode({ id, data, isConnectable }: PromptInputNodeProps) {
-  const { setNodes } = useReactFlow();
+  const { setNodes, getNodes, getEdges } = useReactFlow();
   const [prompt, setPrompt] = useState(data.value);
+  const [isRunning, setIsRunning] = useState(false);
 
   useEffect(() => {
     setPrompt(data.value);
@@ -42,6 +42,81 @@ export function PromptInputNode({ id, data, isConnectable }: PromptInputNodeProp
     );
   }, [id, setNodes]);
 
+  // Helper function to get child nodes recursively
+  const getChildNodes = useCallback((nodeId: string): string[] => {
+    const edges = getEdges();
+    const directChildren = edges
+      .filter(edge => edge.source === nodeId)
+      .map(edge => edge.target);
+    
+    const allChildren = [...directChildren];
+    directChildren.forEach(childId => {
+      allChildren.push(...getChildNodes(childId));
+    });
+    
+    return allChildren;
+  }, [getEdges]);
+
+  // Function to trigger node generation
+  const triggerNodeGeneration = useCallback(async (nodeId: string) => {
+    const node = getNodes().find(n => n.id === nodeId);
+    if (!node) return;
+
+    // Find the node's DOM element and click its generate button
+    const nodeElement = document.querySelector(`[data-id="${nodeId}"]`);
+    const generateButton = Array.from(nodeElement?.querySelectorAll('button') || [])
+      .find(button => button.textContent?.includes('Generate')) as HTMLButtonElement;
+
+    if (generateButton && !generateButton.disabled) {
+      generateButton.click();
+      
+      // Wait for the generation to complete
+      return new Promise<void>((resolve) => {
+        const checkInterval = setInterval(() => {
+          // Get the latest node data
+          const currentNode = getNodes().find(n => n.id === nodeId);
+          
+          // Check if the node has finished generating
+          const isGenerating = nodeElement?.querySelector('.animate-spin') !== null;
+          const hasOutput = currentNode?.data?.value !== undefined;
+          
+          // Resolve when generation is complete and we have output
+          if (!isGenerating && hasOutput) {
+            clearInterval(checkInterval);
+            // Add a small delay to ensure data propagation
+            setTimeout(resolve, 500);
+          }
+        }, 100);
+
+        // Add a timeout to prevent infinite waiting
+        setTimeout(() => {
+          clearInterval(checkInterval);
+          resolve();
+        }, 30000); // 30 second timeout
+      });
+    }
+  }, [getNodes]);
+
+  const runPrompt = useCallback(async () => {
+    setIsRunning(true);
+    try {
+      // Get all child nodes in order
+      const childNodes = getChildNodes(id);
+      
+      // Process nodes sequentially
+      for (const nodeId of childNodes) {
+        console.log(`Processing node: ${nodeId}`);
+        await triggerNodeGeneration(nodeId);
+        // Add a small delay between nodes
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    } catch (error) {
+      console.error('Error running prompt:', error);
+    } finally {
+      setIsRunning(false);
+    }
+  }, [id, getChildNodes, triggerNodeGeneration]);
+
   return (
     <div className="bg-white border-2 border-gray-200 rounded-lg p-3 min-w-[300px] shadow-sm">
       <div className="flex flex-col gap-3">
@@ -63,9 +138,17 @@ export function PromptInputNode({ id, data, isConnectable }: PromptInputNodeProp
         
         <Button 
           className="w-full bg-blue-500 hover:bg-blue-600 text-white"
-          onClick={() => console.log('Running prompt...')}
+          onClick={runPrompt}
+          disabled={isRunning}
         >
-          Run Prompt
+          {isRunning ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              Running...
+            </>
+          ) : (
+            'Run Prompt'
+          )}
         </Button>
       </div>
 
