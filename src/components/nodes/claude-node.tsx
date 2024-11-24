@@ -22,6 +22,7 @@ interface ClaudeNodeData {
   temperature: number
   maxTokens: number
   name: string
+  isWaiting?: boolean
 }
 
 export const CLAUDE_MODELS = {
@@ -262,7 +263,7 @@ export function ClaudeNode({
             </Select>
             <Button 
               onClick={handleGenerate}
-              disabled={isLoading || !hasInputConnection}
+              disabled={isLoading || !hasInputConnection || data.isWaiting}
               size="sm"
               variant={!hasInputConnection ? "ghost" : "default"}
               className="bg-[#262625] hover:bg-gray-700 text-white disabled:bg-gray-400"
@@ -270,7 +271,7 @@ export function ClaudeNode({
               {isLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />
               ) : null}
-              Generate
+              {data.isWaiting ? 'Waiting for previous agent...' : 'Generate'}
             </Button>
           </div>
 

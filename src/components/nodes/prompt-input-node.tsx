@@ -97,25 +97,69 @@ export function PromptInputNode({ id, data, isConnectable }: PromptInputNodeProp
     }
   }, [getNodes]);
 
+  const setNodeWaitingState = useCallback((nodeId: string, isWaiting: boolean) => {
+    setNodes((nodes) =>
+      nodes.map((node) => {
+        if (node.id === nodeId) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              isWaiting,
+            },
+          };
+        }
+        return node;
+      })
+    );
+  }, [setNodes]);
+
   const runPrompt = useCallback(async () => {
     setIsRunning(true);
     try {
       // Get all child nodes in order
       const childNodes = getChildNodes(id);
       
+      // Set all nodes to waiting state initially
+      childNodes.forEach(nodeId => {
+        setNodeWaitingState(nodeId, true);
+      });
+      
       // Process nodes sequentially
-      for (const nodeId of childNodes) {
+      for (const [index, nodeId] of childNodes.entries()) {
         console.log(`Processing node: ${nodeId}`);
+        // Remove waiting state for current node
+        setNodeWaitingState(nodeId, false);
+        
+        // Wait a small moment for React to update the disabled state
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Now trigger the generation
         await triggerNodeGeneration(nodeId);
+        
         // Add a small delay between nodes
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        if (index < childNodes.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
       }
     } catch (error) {
       console.error('Error running prompt:', error);
+      // Get child nodes again in case they changed
+      const childNodes = getChildNodes(id);
+      // Reset waiting state for all nodes in case of error
+      childNodes.forEach(nodeId => {
+        setNodeWaitingState(nodeId, false);
+      });
     } finally {
       setIsRunning(false);
+      // Get child nodes one final time to ensure we clean up all states
+      const childNodes = getChildNodes(id);
+      // Reset waiting state for all nodes when complete
+      childNodes.forEach(nodeId => {
+        setNodeWaitingState(nodeId, false);
+      });
     }
-  }, [id, getChildNodes, triggerNodeGeneration]);
+  }, [id, getChildNodes, triggerNodeGeneration, setNodeWaitingState]);
 
   return (
     <div className="bg-white border-2 border-gray-200 rounded-lg p-3 min-w-[300px] shadow-sm">
