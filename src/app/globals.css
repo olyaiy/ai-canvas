@@ -58,3 +58,32 @@
   }
 }
 
+@layer utilities {
+  /* Webkit browsers (Chrome, Safari, etc) */
+  .overflow-y-auto::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .overflow-y-auto::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  .overflow-y-auto::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 rounded-full;
+  }
+
+  /* Dark mode scrollbar */
+  .dark .overflow-y-auto::-webkit-scrollbar-thumb {
+    @apply bg-gray-600;
+  }
+
+  /* Hover states */
+  .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-400;
+  }
+
+  .dark .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-500;
+  }
+}
+

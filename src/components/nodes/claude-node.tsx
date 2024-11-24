@@ -3,7 +3,7 @@
 import { useCallback, useState, useMemo, useEffect } from 'react'
 import { Handle, Position, useNodeId, useReactFlow, useUpdateNodeInternals } from '@xyflow/react'
 import { Button } from '@/components/ui/button'
-import { Loader2, ChevronDown, Copy, Check, ChevronUp } from 'lucide-react'
+import { Loader2, ChevronDown, Copy, Check, ChevronUp, Expand } from 'lucide-react'
 import { anthropicCall } from '@/lib/ai-calls'
 import {
   Select,
@@ -66,6 +66,7 @@ export function ClaudeNode({
   const [inputPreviews, setInputPreviews] = useState<Array<{ text: string; nodeId: string }>>([]);
   const [nodeName, setNodeName] = useState<string>(data.name ?? "Claude Agent")
   const [isCollapsed, setIsCollapsed] = useState(data.isCollapsed ?? false)
+  const [isSystemPromptExpanded, setIsSystemPromptExpanded] = useState(false)
 
   useEffect(() => {
     const checkConnections = () => {
@@ -309,14 +310,26 @@ export function ClaudeNode({
           }`}>
             <div className="space-y-2">
               <Label htmlFor="systemPrompt" className="text-black">System Prompt</Label>
-              <Textarea
-                id="systemPrompt"
-                value={systemPrompt}
-                onChange={(e) => setSystemPrompt(e.target.value)}
-                placeholder="Enter system prompt..."
-                className="resize-none min-h-[24px] max-h-[96px] overflow-y-auto bg-white/80 border-[#262625] text-black placeholder:text-gray-500"
-                rows={1}
-              />
+              <div className="relative">
+                <Textarea
+                  id="systemPrompt"
+                  value={systemPrompt}
+                  onChange={(e) => setSystemPrompt(e.target.value)}
+                  placeholder="Enter system prompt..."
+                  className={`resize-none overflow-y-auto bg-white/80 border-[#262625] text-black placeholder:text-gray-500 transition-all duration-300 ${
+                    isSystemPromptExpanded ? 'min-h-[200px]' : 'min-h-[24px] max-h-[96px]'
+                  }`}
+                  rows={1}
+                />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute top-1 right-1 h-6 w-6 p-0 hover:bg-gray-100 dark:hover:bg-grey-100 dark:text-gray-900 text-gray-600 "
+                  onClick={() => setIsSystemPromptExpanded(!isSystemPromptExpanded)}
+                >
+                  <Expand className={`h-4 w-4 transition-transform ${isSystemPromptExpanded ? 'rotate-180' : ''}`} />
+                </Button>
+              </div>
             </div>
 
             <div className="space-y-4">
