@@ -27,7 +27,6 @@ export async function saveProject(formData: FormData) {
   }
 
   revalidatePath('/canvas')
-  redirect('/canvas')
 }
 
 export async function createNewProject(formData: FormData) {

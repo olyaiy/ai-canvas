@@ -12,16 +12,14 @@ import {
   addEdge,
   Node,
   NodeMouseHandler,
+  Edge,
 } from '@xyflow/react';import '@xyflow/react/dist/style.css';
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Save, Loader2 } from "lucide-react";
 import { AnimatedEdge } from '@/components/edges/animated-edge'
 import { saveProject } from './actions'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Save } from "lucide-react"
-import { Label } from '@/components/ui/label';
+
 
 const nodeTypes = { textUpdater: TextUpdaterNode, promptInput: PromptInputNode, claude: ClaudeNode, gpt: GPTNode }
 
@@ -73,10 +71,26 @@ const initialEdges = [
   },
 ];
 
-export default function Flow() {
-  const [nodes, setNodes] = useState(initialNodes);
-  const [edges, setEdges] = useState(initialEdges);
+// Add interface for Flow component props
+interface FlowProps {
+  initialFlowData?: {
+    nodes: Node[];
+    edges: Edge[];
+  } | null;
+  projectName: string;
+  isPreview?: boolean;
+}
+
+export default function Flow({ initialFlowData, projectName, isPreview = false }: FlowProps) {
+  // Initialize state with either initialFlowData or default values
+  const [nodes, setNodes] = useState(
+    initialFlowData?.nodes || initialNodes
+  );
+  const [edges, setEdges] = useState(
+    initialFlowData?.edges || initialEdges
+  );
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const onNodesChange = useCallback(
     (changes: any) => setNodes((nds) => applyNodeChanges(changes, nds)),
@@ -184,87 +198,85 @@ export default function Flow() {
     }));
   }, [nodes, selectedNodeId]);
 
+  const handleSave = useCallback(async () => {
+    setIsSaving(true);
+    try {
+      const formData = new FormData();
+      formData.append('name', projectName);
+      formData.append('flow_data', JSON.stringify({ nodes, edges }));
+      await saveProject(formData);
+    } finally {
+      setIsSaving(false);
+    }
+  }, [nodes, edges, projectName]);
+
+  // Initialize with initialFlowData if provided
+  useEffect(() => {
+    if (initialFlowData) {
+      setNodes(initialFlowData.nodes);
+      setEdges(initialFlowData.edges);
+    }
+  }, [initialFlowData]);
+
+  // Disable interactions if it's a preview
+  const proOptions = useMemo(() => ({
+    hideAttribution: true,
+    disabled: isPreview
+  }), [isPreview]);
+
   return (
     <div style={{ height: '100%' }}>
       <ReactFlow
-        nodes={nodesWithSelection}
+        nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
-        onNodeClick={onNodeClick}
-        onPaneClick={onPaneClick}
         nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
-        defaultEdgeOptions={{ type: 'default' }}
-        nodesDraggable
-        proOptions={{ hideAttribution: true }}
+        proOptions={proOptions}
+        fitView
       >
+        {!isPreview && (
+          <div className="absolute bottom-4 right-4 flex gap-2">
+            <Button
+              onClick={addPromptNode}
+              className="bg-blue-500 hover:bg-blue-600 text-white flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              <span>New Prompt</span>
+            </Button>
+            <Button
+              onClick={addGPTNode}
+              className="bg-[#10a37f] hover:bg-[#0d8a6c] text-white flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              <span>New GPT Agent</span>
+            </Button>
+            <Button
+              onClick={addClaudeNode}
+              className="bg-[#D4A27F] hover:bg-[#b88b6b] text-black flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              <span>New Claude Agent</span>
+            </Button>
+            
+            <Button
+              onClick={handleSave}
+              disabled={isSaving}
+              className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2 min-w-[130px] transition-all"
+            >
+              {isSaving ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+              <span>{isSaving ? 'Saving...' : 'Save Project'}</span>
+            </Button>
+          </div>
+        )}
         <Background />
         <Controls />
       </ReactFlow>
-      
-      <div className="absolute bottom-4 right-4 flex gap-2">
-        <Button
-          onClick={addPromptNode}
-          className="bg-blue-500 hover:bg-blue-600 text-white flex items-center gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          <span>New Prompt</span>
-        </Button>
-        <Button
-          onClick={addGPTNode}
-          className="bg-[#10a37f] hover:bg-[#0d8a6c] text-white flex items-center gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          <span>New GPT Agent</span>
-        </Button>
-        <Button
-          onClick={addClaudeNode}
-          className="bg-[#D4A27F] hover:bg-[#b88b6b] text-black flex items-center gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          <span>New Claude Agent</span>
-        </Button>
-        
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button
-              className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2"
-            >
-              <Save className="h-4 w-4" />
-              <span>Save Project</span>
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Save Project</DialogTitle>
-            </DialogHeader>
-            <form action={saveProject} className="space-y-4">
-              <div>
-                <Label htmlFor="name">Project Name</Label>
-                <Input
-                  id="name"
-                  name="name"
-                  placeholder="My Amazing Flow"
-                  required
-                />
-              </div>
-              <input 
-                type="hidden" 
-                name="flow_data" 
-                value={JSON.stringify({
-                  nodes,
-                  edges,
-                })}
-              />
-              <Button type="submit" className="w-full">
-                Save Project
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
     </div>
   );
 }

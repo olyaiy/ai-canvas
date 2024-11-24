@@ -1,4 +1,4 @@
-import Flow from "../page";
+import Flow from "../canvas";
 import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 
@@ -8,7 +8,9 @@ interface PageProps {
   }
 }
 
-async function getProject(projectId: string) {
+async function getProject(projectId: string | undefined) {
+  if (!projectId) return null;
+  
   const supabase = await createClient()
   
   // Get current user
@@ -33,14 +35,16 @@ async function getProject(projectId: string) {
 }
 
 export default async function Page({ params }: PageProps) {
-  const project = await getProject(params.id)
+  // TypeScript type assertion to tell TS that params.id is definitely a string
+  const projectId = params.id as string
+  const project = await getProject(projectId)
   
   if (!project) {
     notFound()
   }
 
   return (
-    <div className="w-[100vw] h-[100vh] flex flex-col overflow-hidden">
+    <div className="w-full h-screen flex flex-col overflow-hidden">
       {/* Project Header */}
       <div className="p-4 border-b">
         <h1 className="text-2xl font-bold">{project.name}</h1>
@@ -51,9 +55,7 @@ export default async function Page({ params }: PageProps) {
 
       {/* Canvas */}
       <div className="flex-1 p-4">
-        <div className="h-full w-full bg-red-500/10 border border-red-500">
-
-        </div>  
+        <Flow initialFlowData={project.flow_data} />
       </div>
     </div>
   );
