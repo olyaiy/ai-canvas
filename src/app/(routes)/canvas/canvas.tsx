@@ -16,9 +16,21 @@ import {
 } from '@xyflow/react';import '@xyflow/react/dist/style.css';
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Plus, Save, Loader2 } from "lucide-react";
+import { Plus, Save, Loader2, Trash2 } from "lucide-react";
 import { AnimatedEdge } from '@/components/edges/animated-edge'
-import { saveProject } from './actions'
+import { saveProject, deleteProject } from './actions'
+import { useRouter } from 'next/navigation'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 
 const nodeTypes = { textUpdater: TextUpdaterNode, promptInput: PromptInputNode, claude: ClaudeNode, gpt: GPTNode }
@@ -78,10 +90,11 @@ interface FlowProps {
     edges: Edge[];
   } | null;
   projectName: string;
+  projectId: string;
   isPreview?: boolean;
 }
 
-export default function Flow({ initialFlowData, projectName, isPreview = false }: FlowProps) {
+export default function Flow({ initialFlowData, projectName, projectId, isPreview = false }: FlowProps) {
   const [flowData, setFlowData] = useState(initialFlowData)
 
   useEffect(() => {
@@ -216,6 +229,19 @@ export default function Flow({ initialFlowData, projectName, isPreview = false }
     }
   }, [nodes, edges, projectName]);
 
+  const router = useRouter();
+
+  // Add state for alert dialog
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  // Update delete handler to remove confirm
+  const handleDelete = useCallback(async () => {
+    const result = await deleteProject(projectId);
+    if (result.success) {
+      router.push('/');
+    }
+  }, [projectId, router]);
+
   // Disable interactions if it's a preview
   const proOptions = useMemo(() => ({
     hideAttribution: true,
@@ -283,6 +309,33 @@ export default function Flow({ initialFlowData, projectName, isPreview = false }
               )}
               <span>{isSaving ? 'Saving...' : 'Save Project'}</span>
             </Button>
+            
+            <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="destructive"
+                  className="flex items-center gap-2"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  <span>Delete Project</span>
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete your project
+                    and remove all of its data from our servers.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDelete}>
+                    Delete Project
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         )}
         <Background />

@@ -1,5 +1,3 @@
-
-
 import Flow from "./(routes)/canvas/canvas";
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
@@ -7,9 +5,9 @@ import { LogoutButton } from '@/components/logout-button'
 import Link from 'next/link'
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { formatDistanceToNow } from 'date-fns'
-import { Plus, ChevronLeft, ChevronRight } from "lucide-react"
+import { Plus, ChevronLeft, ChevronRight, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { createNewProject } from './(routes)/canvas/actions'
+import { createNewProject, deleteProject } from './(routes)/canvas/actions'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
@@ -94,6 +92,7 @@ export default async function Page({
             <Flow 
               initialFlowData={initialFlowData}
               projectName={latestProject?.name || 'Preview'}
+              projectId={latestProject?.id || ''}
               isPreview={true}
             />
           </div>
@@ -135,23 +134,36 @@ export default async function Page({
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {recentProjects.map((project) => (
-                <Link 
-                  href={`/canvas/${project.id}`} 
-                  key={project.id}
-                  className={`${latestProject?.id === project.id ? 'order-first' : ''}`}
-                >
-                  <Card className={`
-                    hover:bg-accent transition-all duration-200 hover:shadow-lg
-                    ${latestProject?.id === project.id ? 
-                      'ring-2 ring-purple-500 dark:ring-purple-400 relative transform -translate-y-1 shadow-lg' : 
-                      ''
-                    }
-                  `}>
-                    {latestProject?.id === project.id && (
-                      <div className="absolute -top-2 -right-2 bg-purple-500 text-white text-xs px-2 py-1 rounded-full">
-                        Previewing
-                      </div>
-                    )}
+                <Card key={project.id} className={`
+                  group relative
+                  hover:bg-accent transition-all duration-200 hover:shadow-lg
+                  ${latestProject?.id === project.id ? 
+                    'ring-2 ring-purple-500 dark:ring-purple-400 relative transform -translate-y-1 shadow-lg' : 
+                    ''
+                  }
+                `}>
+                  {latestProject?.id === project.id && (
+                    <div className="absolute -top-2 -right-2 bg-purple-500 text-white text-xs px-2 py-1 rounded-full">
+                      Previewing
+                    </div>
+                  )}
+                  <form 
+                    action={async () => {
+                      'use server'
+                      await deleteProject(project.id)
+                    }}
+                    className="absolute bottom-2 right-2 transition-colors"
+                  >
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      className="h-8 w-8 hover:variant-destructive group/delete"
+                      type="submit"
+                    >
+                      <Trash2 className="h-4 w-4 text-muted-foreground group-hover/delete:text-destructive" />
+                    </Button>
+                  </form>
+                  <Link href={`/canvas/${project.id}`}>
                     <CardHeader>
                       <CardTitle className="text-lg line-clamp-1">{project.name}</CardTitle>
                       <p className="text-sm text-muted-foreground">
@@ -163,8 +175,8 @@ export default async function Page({
                         {project.node_count || 0} nodes • {project.edge_count || 0} connections
                       </div>
                     </CardContent>
-                  </Card>
-                </Link>
+                  </Link>
+                </Card>
               ))}
             </div>
             

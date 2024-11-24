@@ -35,19 +35,18 @@ async function getProject(projectId: string | undefined) {
 }
 
 export default async function Page({ params }: PageProps) {
-  // TypeScript type assertion to tell TS that params.id is definitely a string
   const projectId = params.id as string
   const project = await getProject(projectId)
   
   if (!project) {
-    notFound()
+    redirect('/')
   }
 
   return (
     <div className="w-full h-screen flex flex-col overflow-hidden">
       {/* Project Header */}
       <div className="p-4 border-b">
-        <h1 className="text-2xl font-bold">{project.name}</h1>
+        <h1 className="text-2xl font-bold">{project.naame}</h1>
         <p className="text-sm text-muted-foreground">
           Last updated: {new Date(project.updated_at).toLocaleDateString()}
         </p>
@@ -55,7 +54,11 @@ export default async function Page({ params }: PageProps) {
 
       {/* Canvas */}
       <div className="flex-1 p-4">
-        <Flow initialFlowData={project.flow_data} projectName={project.name} />
+        <Flow 
+          initialFlowData={project.flow_data} 
+          projectName={project.name}
+          projectId={projectId}
+        />
       </div>
     </div>
   );
