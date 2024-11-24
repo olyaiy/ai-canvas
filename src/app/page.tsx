@@ -24,11 +24,9 @@ export default async function Page() {
 }
 
   return (
-    <div className="relative w-[100vw] h-[100vh] flex justify-center items-center overflow-hidden">
-      <div className="absolute top-4 right-4">
-        <LogoutButton />
-      </div>
-      <div className="h-[90vh] w-[90vw] bg-red-500/10 border border-red-500">
+    <div className="relative h-full w-full flex justify-center items-center overflow-hidden">
+
+      <div className="h-full w-full bg-red-500/20 border border-red-500">
         <Flow />
       </div>  
     </div>

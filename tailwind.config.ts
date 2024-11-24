@@ -49,6 +49,16 @@ export default {
   				'3': 'hsl(var(--chart-3))',
   				'4': 'hsl(var(--chart-4))',
   				'5': 'hsl(var(--chart-5))'
+  			},
+  			sidebar: {
+  				DEFAULT: 'hsl(var(--sidebar-background))',
+  				foreground: 'hsl(var(--sidebar-foreground))',
+  				primary: 'hsl(var(--sidebar-primary))',
+  				'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
+  				accent: 'hsl(var(--sidebar-accent))',
+  				'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
+  				border: 'hsl(var(--sidebar-border))',
+  				ring: 'hsl(var(--sidebar-ring))'
   			}
   		},
   		borderRadius: {
@@ -59,25 +69,25 @@ export default {
   		keyframes: {
   			glowIn: {
   				'0%': {
-  					'box-shadow': '0 0 0px rgba(59,130,246,0)',
+  					'box-shadow': '0 0 0px rgba(59,130,246,0)'
   				},
   				'100%': {
-  					'box-shadow': '0 0 20px rgba(59,130,246,0.9)',
-  				},
+  					'box-shadow': '0 0 20px rgba(59,130,246,0.9)'
+  				}
   			},
   			glowOut: {
   				'0%': {
-  					'box-shadow': '0 0 20px rgba(59,130,246,0.9)',
+  					'box-shadow': '0 0 20px rgba(59,130,246,0.9)'
   				},
   				'100%': {
-  					'box-shadow': '0 0 0px rgba(59,130,246,0)',
-  				},
+  					'box-shadow': '0 0 0px rgba(59,130,246,0)'
+  				}
   			}
   		},
   		animation: {
   			'glow-in': 'glowIn 0.2s ease-out forwards',
-  			'glow-out': 'glowOut 0.2s ease-in forwards',
-  		},
+  			'glow-out': 'glowOut 0.2s ease-in forwards'
+  		}
   	}
   },
   plugins: [require("tailwindcss-animate")],
