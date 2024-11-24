@@ -268,7 +268,7 @@ export function ClaudeNode({
               variant={!hasInputConnection ? "ghost" : "default"}
               className="bg-[#262625] hover:bg-gray-700 text-white disabled:bg-gray-400"
             >
-              {isLoading ? (
+              {isLoading || data.isWaiting ? (
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />
               ) : null}
               {data.isWaiting ? 'Waiting for previous agent...' : 'Generate'}
