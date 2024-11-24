@@ -3,6 +3,7 @@ import { SidebarProvider } from "@/components/ui/sidebar"
 import { ThemeProvider } from "@/components/theme-provider"
 import { createClient } from '@/lib/supabase/server'
 import "@/app/globals.css"
+import { Toaster } from "@/components/ui/toaster"
 
 export default async function RootLayout({
   children,
@@ -34,10 +35,13 @@ export default async function RootLayout({
               )}
               <main className="p-8 flex-1">
                 {children}
+                <Toaster />
+
               </main>
             </div>
           </SidebarProvider>
         </ThemeProvider>
+        <Toaster />
       </body>
     </html>
   )
