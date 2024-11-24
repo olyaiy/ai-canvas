@@ -3,7 +3,7 @@
 import { useCallback, useState, useMemo, useEffect } from 'react'
 import { Handle, Position, useNodeId, useReactFlow, useUpdateNodeInternals } from '@xyflow/react'
 import { Button } from '@/components/ui/button'
-import { Loader2, ChevronDown, Copy, Check } from 'lucide-react'
+import { Loader2, ChevronDown, Copy, Check, ChevronUp } from 'lucide-react'
 import { anthropicCall } from '@/lib/ai-calls'
 import {
   Select,
@@ -23,6 +23,7 @@ interface ClaudeNodeData {
   maxTokens: number
   name: string
   isWaiting?: boolean
+  isCollapsed?: boolean
 }
 
 export const CLAUDE_MODELS = {
@@ -64,6 +65,7 @@ export function ClaudeNode({
   const [isCopied, setIsCopied] = useState(false)
   const [inputPreviews, setInputPreviews] = useState<Array<{ text: string; nodeId: string }>>([]);
   const [nodeName, setNodeName] = useState<string>(data.name ?? "Claude Agent")
+  const [isCollapsed, setIsCollapsed] = useState(data.isCollapsed ?? false)
 
   useEffect(() => {
     const checkConnections = () => {
@@ -213,16 +215,43 @@ export function ClaudeNode({
     }))
   }, [nodeName, nodeId, setNodes])
 
+  useEffect(() => {
+    setNodes(nodes => nodes.map(node => {
+      if (node.id === nodeId) {
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            isCollapsed
+          }
+        }
+      }
+      return node
+    }))
+  }, [isCollapsed, nodeId, setNodes])
+
   return (
     <div className="relative">
-      <input
-        type="text"
-        value={nodeName}
-        onChange={(e) => setNodeName(e.target.value)}
-        className="absolute -top-7 left-0 bg-transparent font-medium text-sm text-gray-800 dark:text-gray-100 border border-transparent hover:border-gray-400 rounded px-1 focus:border-gray-600 dark:focus:border-gray-300 focus:outline-none w-[200px]"
-      />
+      <div className="absolute -top-7 left-0 right-0 flex items-center justify-between">
+        <input
+          type="text"
+          value={nodeName}
+          onChange={(e) => setNodeName(e.target.value)}
+          className="bg-transparent font-medium text-sm text-gray-800 dark:text-gray-100 border border-transparent hover:border-gray-400 rounded px-1 focus:border-gray-600 dark:focus:border-gray-300 focus:outline-none w-[200px]"
+        />
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-6 w-6 p-0"
+          onClick={() => setIsCollapsed(!isCollapsed)}
+        >
+          <ChevronUp className={`h-4 w-4 transition-transform ${isCollapsed ? 'rotate-180' : ''}`} />
+        </Button>
+      </div>
       
-      <div className="bg-[#D4A27F] rounded-lg p-3 min-w-[300px] shadow-md">
+      <div className={`bg-[#D4A27F] rounded-lg p-3 min-w-[300px] shadow-md transition-all duration-300 ${
+        isCollapsed ? 'h-[60px]' : ''
+      }`}>
         <div className="relative">
           <Handle
             type="target"
@@ -275,102 +304,106 @@ export function ClaudeNode({
             </Button>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="systemPrompt" className="text-black">System Prompt</Label>
-            <Textarea
-              id="systemPrompt"
-              value={systemPrompt}
-              onChange={(e) => setSystemPrompt(e.target.value)}
-              placeholder="Enter system prompt..."
-              className="resize-none min-h-[24px] max-h-[96px] overflow-y-auto bg-white/80 border-[#262625] text-black placeholder:text-gray-500"
-              rows={1}
-            />
-          </div>
-
-          <div className="space-y-4">
-            {/* Temperature Slider */}
+          <div className={`space-y-3 transition-opacity duration-300 ${
+            isCollapsed ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100'
+          }`}>
             <div className="space-y-2">
-              <Label className="text-black">Temperature: {temperature.toFixed(2)}</Label>
-              <Slider
-                value={[temperature]}
-                onValueChange={([value]) => setTemperature(value)}
-                max={1}
-                min={0}
-                step={0.01}
-                className="w-full"
+              <Label htmlFor="systemPrompt" className="text-black">System Prompt</Label>
+              <Textarea
+                id="systemPrompt"
+                value={systemPrompt}
+                onChange={(e) => setSystemPrompt(e.target.value)}
+                placeholder="Enter system prompt..."
+                className="resize-none min-h-[24px] max-h-[96px] overflow-y-auto bg-white/80 border-[#262625] text-black placeholder:text-gray-500"
+                rows={1}
               />
             </div>
 
-            {/* Max Tokens Slider */}
-            <div className="space-y-2">
-              <Label className="text-black">
-                Max Tokens: {maxTokens}
-              </Label>
-              <Slider
-                value={[maxTokens]}
-                onValueChange={([value]) => setMaxTokens(value)}
-                max={selectedModel.includes('opus') ? 4096 : 8192}
-                min={1}
-                step={1}
-                className="w-full"
-              />
-            </div>
-          </div>
+            <div className="space-y-4">
+              {/* Temperature Slider */}
+              <div className="space-y-2">
+                <Label className="text-black">Temperature: {temperature.toFixed(2)}</Label>
+                <Slider
+                  value={[temperature]}
+                  onValueChange={([value]) => setTemperature(value)}
+                  max={1}
+                  min={0}
+                  step={0.01}
+                  className="w-full"
+                />
+              </div>
 
-          {/* Input Previews Section */}
-          <div className="space-y-2">
-            <div className="text-xs font-medium text-gray-700">
-              Inputs:
+              {/* Max Tokens Slider */}
+              <div className="space-y-2">
+                <Label className="text-black">
+                  Max Tokens: {maxTokens}
+                </Label>
+                <Slider
+                  value={[maxTokens]}
+                  onValueChange={([value]) => setMaxTokens(value)}
+                  max={selectedModel.includes('opus') ? 4096 : 8192}
+                  min={1}
+                  step={1}
+                  className="w-full"
+                />
+              </div>
             </div>
-            {inputPreviews.length > 0 ? (
-              inputPreviews.map((preview, index) => (
-                <div 
-                  key={preview.nodeId} 
-                  className="text-sm bg-white/80 border border-[#262625] rounded-md p-2 text-gray-600"
-                >
-                  <div className="text-xs font-medium text-gray-700 mb-1">
-                    From: {getNode(preview.nodeId)?.data?.name || 'Unnamed Node'}
-                    <span className="text-[10px] text-gray-400 block">
-                      ID: {preview.nodeId}
-                    </span>
+
+            {/* Input Previews Section */}
+            <div className="space-y-2">
+              <div className="text-xs font-medium text-gray-700">
+                Inputs:
+              </div>
+              {inputPreviews.length > 0 ? (
+                inputPreviews.map((preview, index) => (
+                  <div 
+                    key={preview.nodeId} 
+                    className="text-sm bg-white/80 border border-[#262625] rounded-md p-2 text-gray-600"
+                  >
+                    <div className="text-xs font-medium text-gray-700 mb-1">
+                      From: {getNode(preview.nodeId)?.data?.name || 'Unnamed Node'}
+                      <span className="text-[10px] text-gray-400 block">
+                        ID: {preview.nodeId}
+                      </span>
+                    </div>
+                    <div className="w-[280px]">
+                      {truncateText(preview.text, 100)}
+                    </div>
                   </div>
-                  <div className="w-[280px]">
-                    {truncateText(preview.text, 100)}
-                  </div>
+                ))
+              ) : (
+                <div className="text-sm bg-white/80 border border-[#262625] rounded-md p-2 text-gray-500 italic">
+                  <div className="w-[280px]">No input connected</div>
                 </div>
-              ))
-            ) : (
-              <div className="text-sm bg-white/80 border border-[#262625] rounded-md p-2 text-gray-500 italic">
-                <div className="w-[280px]">No input connected</div>
-              </div>
-            )}
-          </div>
-
-          <div className="mt-4 border border-[#262625] rounded-lg bg-white/80 p-3">
-            <div className="font-medium text-sm text-gray-700 mb-2 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className={`h-2 w-2 rounded-full ${output ? 'bg-[#262625]' : 'bg-gray-400'}`} />
-                Output
-              </div>
-              {output && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 text-gray-600 hover:bg-[#262625] hover:text-white transition-colors"
-                  onClick={handleCopy}
-                >
-                  {isCopied ? (
-                    <Check className="h-4 w-4" />
-                  ) : (
-                    <Copy className="h-4 w-4" />
-                  )}
-                </Button>
               )}
             </div>
-            <div className="p-3 bg-white rounded-md text-sm break-words w-[280px] max-h-[200px] overflow-y-auto border border-[#262625] text-black shadow-sm">
-              {output || (
-                <span className="text-gray-500 italic">No output generated yet</span>
-              )}
+
+            <div className="mt-4 border border-[#262625] rounded-lg bg-white/80 p-3">
+              <div className="font-medium text-sm text-gray-700 mb-2 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className={`h-2 w-2 rounded-full ${output ? 'bg-[#262625]' : 'bg-gray-400'}`} />
+                  Output
+                </div>
+                {output && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 text-gray-600 hover:bg-[#262625] hover:text-white transition-colors"
+                    onClick={handleCopy}
+                  >
+                    {isCopied ? (
+                      <Check className="h-4 w-4" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </Button>
+                )}
+              </div>
+              <div className="p-3 bg-white rounded-md text-sm break-words w-[280px] max-h-[200px] overflow-y-auto border border-[#262625] text-black shadow-sm">
+                {output || (
+                  <span className="text-gray-500 italic">No output generated yet</span>
+                )}
+              </div>
             </div>
           </div>
         </div>

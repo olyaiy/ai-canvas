@@ -70,7 +70,8 @@ const initialNodes = [
       output: undefined,
       temperature: 0.4,
       maxTokens: 8192,
-      name: "Claude Agent"
+      name: "Claude Agent",
+      isCollapsed: false
     },
   },
 ];
@@ -159,7 +160,8 @@ export default function Flow({ initialFlowData, projectName, projectId, isPrevie
         output: undefined,
         temperature: 0.4,
         maxTokens: 8192,
-        name: "Claude Agent"
+        name: "Claude Agent",
+        isCollapsed: false
       },
     };
 
