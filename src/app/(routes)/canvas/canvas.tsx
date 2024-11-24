@@ -44,7 +44,10 @@ const initialNodes = [
     id: 'prompt-1',
     type: 'promptInput',
     position: { x: 300, y: 10 },
-    data: { value: "testing prompt input node" },
+    data: { 
+      value: "testing prompt input node",
+      name: "Prompt Input"
+    },
   },
   {
     id: 'gpt-1',
@@ -55,6 +58,7 @@ const initialNodes = [
       output: undefined,
       temperature: 0.4,
       maxTokens: 16384,
+      name: "GPT Agent"
     },
   },
   {
@@ -66,6 +70,7 @@ const initialNodes = [
       output: undefined,
       temperature: 0.4,
       maxTokens: 8192,
+      name: "Claude Agent"
     },
   },
 ];
@@ -154,6 +159,7 @@ export default function Flow({ initialFlowData, projectName, projectId, isPrevie
         output: undefined,
         temperature: 0.4,
         maxTokens: 8192,
+        name: "Claude Agent"
       },
     };
 

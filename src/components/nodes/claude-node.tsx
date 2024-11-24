@@ -21,6 +21,7 @@ interface ClaudeNodeData {
   systemPrompt: string
   temperature: number
   maxTokens: number
+  name: string
 }
 
 export const CLAUDE_MODELS = {
@@ -61,6 +62,7 @@ export function ClaudeNode({
   const updateNodeInternals = useUpdateNodeInternals()
   const [isCopied, setIsCopied] = useState(false)
   const [inputPreviews, setInputPreviews] = useState<Array<{ text: string; nodeId: string }>>([]);
+  const [nodeName, setNodeName] = useState<string>(data.name ?? "Claude Agent")
 
   useEffect(() => {
     const checkConnections = () => {
@@ -195,174 +197,198 @@ export function ClaudeNode({
     setTimeout(() => setIsCopied(false), 2000)
   }, [output])
 
+  useEffect(() => {
+    setNodes(nodes => nodes.map(node => {
+      if (node.id === nodeId) {
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            name: nodeName
+          }
+        }
+      }
+      return node
+    }))
+  }, [nodeName, nodeId, setNodes])
+
   return (
-    <div className="bg-[#D4A27F] rounded-lg p-3 min-w-[300px] shadow-md">
-      <div className="relative">
-        <Handle
-          type="target"
-          position={Position.Top}
-          id="claude-in"
-          isConnectable={isConnectable}
-          className={`!w-8 !h-8 ${
-            hasInputConnection ? '!bg-[#6749C6]' : '!bg-[#6749C6]'
-          } !transition-all !duration-150 cursor-grab active:cursor-grabbing hover:!bg-[#5438B4] 
-          before:!absolute before:!inset-0 before:!rounded-full before:!transition-all before:!duration-150
-          hover:before:!ring-2 hover:before:!ring-[#6749C6] hover:before:!ring-offset-2 hover:before:!ring-offset-[#D4A27F]
-          !flex !items-center !justify-center`}
-          style={{ 
-            transform: 'translate(-50%, -100%)',
-            zIndex: 100 
-          }}
-        >
-          <ChevronDown className="w-5 h-5 text-white" />
-        </Handle>
-      </div>
+    <div className="relative">
+      <input
+        type="text"
+        value={nodeName}
+        onChange={(e) => setNodeName(e.target.value)}
+        className="absolute -top-7 left-0 bg-transparent font-medium text-sm text-gray-800 dark:text-gray-100 border border-transparent hover:border-gray-400 rounded px-1 focus:border-gray-600 dark:focus:border-gray-300 focus:outline-none w-[200px]"
+      />
       
-      <div className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <Select
-            value={selectedModel}
-            onValueChange={(value) => setSelectedModel(value as ClaudeModelType)}
+      <div className="bg-[#D4A27F] rounded-lg p-3 min-w-[300px] shadow-md">
+        <div className="relative">
+          <Handle
+            type="target"
+            position={Position.Top}
+            id="claude-in"
+            isConnectable={isConnectable}
+            className={`!w-8 !h-8 ${
+              hasInputConnection ? '!bg-[#6749C6]' : '!bg-[#6749C6]'
+            } !transition-all !duration-150 cursor-grab active:cursor-grabbing hover:!bg-[#5438B4] 
+            before:!absolute before:!inset-0 before:!rounded-full before:!transition-all before:!duration-150
+            hover:before:!ring-2 hover:before:!ring-[#6749C6] hover:before:!ring-offset-2 hover:before:!ring-offset-[#D4A27F]
+            !flex !items-center !justify-center`}
+            style={{ 
+              transform: 'translate(-50%, -100%)',
+              zIndex: 100 
+            }}
           >
-            <SelectTrigger className="w-[180px] bg-white/80 border-[#262625] text-black">
-              <SelectValue placeholder="Select model" />
-            </SelectTrigger>
-            <SelectContent className="bg-white border-[#262625] text-black">
-              {Object.entries(CLAUDE_MODELS).map(([value, label]) => (
-                <SelectItem key={value} value={value} className="hover:bg-gray-100">
-                  {label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button 
-            onClick={handleGenerate}
-            disabled={isLoading || !hasInputConnection}
-            size="sm"
-            variant={!hasInputConnection ? "ghost" : "default"}
-            className="bg-[#262625] hover:bg-gray-700 text-white disabled:bg-gray-400"
-          >
-            {isLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin mr-2" />
-            ) : null}
-            Generate
-          </Button>
+            <ChevronDown className="w-5 h-5 text-white" />
+          </Handle>
         </div>
+        
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <Select
+              value={selectedModel}
+              onValueChange={(value) => setSelectedModel(value as ClaudeModelType)}
+            >
+              <SelectTrigger className="w-[180px] bg-white/80 border-[#262625] text-black">
+                <SelectValue placeholder="Select model" />
+              </SelectTrigger>
+              <SelectContent className="bg-white border-[#262625] text-black">
+                {Object.entries(CLAUDE_MODELS).map(([value, label]) => (
+                  <SelectItem key={value} value={value} className="hover:bg-gray-100">
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button 
+              onClick={handleGenerate}
+              disabled={isLoading || !hasInputConnection}
+              size="sm"
+              variant={!hasInputConnection ? "ghost" : "default"}
+              className="bg-[#262625] hover:bg-gray-700 text-white disabled:bg-gray-400"
+            >
+              {isLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : null}
+              Generate
+            </Button>
+          </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="systemPrompt" className="text-black">System Prompt</Label>
-          <Textarea
-            id="systemPrompt"
-            value={systemPrompt}
-            onChange={(e) => setSystemPrompt(e.target.value)}
-            placeholder="Enter system prompt..."
-            className="resize-none min-h-[24px] max-h-[96px] overflow-y-auto bg-white/80 border-[#262625] text-black placeholder:text-gray-500"
-            rows={1}
-          />
-        </div>
-
-        <div className="space-y-4">
-          {/* Temperature Slider */}
           <div className="space-y-2">
-            <Label className="text-black">Temperature: {temperature.toFixed(2)}</Label>
-            <Slider
-              value={[temperature]}
-              onValueChange={([value]) => setTemperature(value)}
-              max={1}
-              min={0}
-              step={0.01}
-              className="w-full"
+            <Label htmlFor="systemPrompt" className="text-black">System Prompt</Label>
+            <Textarea
+              id="systemPrompt"
+              value={systemPrompt}
+              onChange={(e) => setSystemPrompt(e.target.value)}
+              placeholder="Enter system prompt..."
+              className="resize-none min-h-[24px] max-h-[96px] overflow-y-auto bg-white/80 border-[#262625] text-black placeholder:text-gray-500"
+              rows={1}
             />
           </div>
 
-          {/* Max Tokens Slider */}
-          <div className="space-y-2">
-            <Label className="text-black">
-              Max Tokens: {maxTokens}
-            </Label>
-            <Slider
-              value={[maxTokens]}
-              onValueChange={([value]) => setMaxTokens(value)}
-              max={selectedModel.includes('opus') ? 4096 : 8192}
-              min={1}
-              step={1}
-              className="w-full"
-            />
-          </div>
-        </div>
+          <div className="space-y-4">
+            {/* Temperature Slider */}
+            <div className="space-y-2">
+              <Label className="text-black">Temperature: {temperature.toFixed(2)}</Label>
+              <Slider
+                value={[temperature]}
+                onValueChange={([value]) => setTemperature(value)}
+                max={1}
+                min={0}
+                step={0.01}
+                className="w-full"
+              />
+            </div>
 
-        {/* Input Previews Section */}
-        <div className="space-y-2">
-          <div className="text-xs font-medium text-gray-700">
-            Inputs:
+            {/* Max Tokens Slider */}
+            <div className="space-y-2">
+              <Label className="text-black">
+                Max Tokens: {maxTokens}
+              </Label>
+              <Slider
+                value={[maxTokens]}
+                onValueChange={([value]) => setMaxTokens(value)}
+                max={selectedModel.includes('opus') ? 4096 : 8192}
+                min={1}
+                step={1}
+                className="w-full"
+              />
+            </div>
           </div>
-          {inputPreviews.length > 0 ? (
-            inputPreviews.map((preview, index) => (
-              <div 
-                key={preview.nodeId} 
-                className="text-sm bg-white/80 border border-[#262625] rounded-md p-2 text-gray-600"
-              >
-                <div className="text-xs font-medium text-gray-700 mb-1">
-                  From {preview.nodeId}:
+
+          {/* Input Previews Section */}
+          <div className="space-y-2">
+            <div className="text-xs font-medium text-gray-700">
+              Inputs:
+            </div>
+            {inputPreviews.length > 0 ? (
+              inputPreviews.map((preview, index) => (
+                <div 
+                  key={preview.nodeId} 
+                  className="text-sm bg-white/80 border border-[#262625] rounded-md p-2 text-gray-600"
+                >
+                  <div className="text-xs font-medium text-gray-700 mb-1">
+                    From {preview.nodeId}:
+                  </div>
+                  {preview.text}
                 </div>
-                {preview.text}
+              ))
+            ) : (
+              <div className="text-sm bg-white/80 border border-[#262625] rounded-md p-2 text-gray-500 italic">
+                No input connected
               </div>
-            ))
-          ) : (
-            <div className="text-sm bg-white/80 border border-[#262625] rounded-md p-2 text-gray-500 italic">
-              No input connected
-            </div>
-          )}
-        </div>
-
-        <div className="mt-4 border border-[#262625] rounded-lg bg-white/80 p-3">
-          <div className="font-medium text-sm text-gray-700 mb-2 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className={`h-2 w-2 rounded-full ${output ? 'bg-[#262625]' : 'bg-gray-400'}`} />
-              Output
-            </div>
-            {output && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6 text-gray-600 hover:bg-[#262625] hover:text-white transition-colors"
-                onClick={handleCopy}
-              >
-                {isCopied ? (
-                  <Check className="h-4 w-4" />
-                ) : (
-                  <Copy className="h-4 w-4" />
-                )}
-              </Button>
             )}
           </div>
-          <div className="p-3 bg-white rounded-md text-sm break-words w-[280px] max-h-[200px] overflow-y-auto border border-[#262625] text-black shadow-sm">
-            {output || (
-              <span className="text-gray-500 italic">No output generated yet</span>
-            )}
+
+          <div className="mt-4 border border-[#262625] rounded-lg bg-white/80 p-3">
+            <div className="font-medium text-sm text-gray-700 mb-2 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className={`h-2 w-2 rounded-full ${output ? 'bg-[#262625]' : 'bg-gray-400'}`} />
+                Output
+              </div>
+              {output && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 text-gray-600 hover:bg-[#262625] hover:text-white transition-colors"
+                  onClick={handleCopy}
+                >
+                  {isCopied ? (
+                    <Check className="h-4 w-4" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                </Button>
+              )}
+            </div>
+            <div className="p-3 bg-white rounded-md text-sm break-words w-[280px] max-h-[200px] overflow-y-auto border border-[#262625] text-black shadow-sm">
+              {output || (
+                <span className="text-gray-500 italic">No output generated yet</span>
+              )}
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="relative">
-        <Handle
-          type="source"
-          position={Position.Bottom}
-          id="claude-out"
-          isConnectable={isConnectable}
-          className={`!w-8 !h-8 ${
-            hasOutputConnection ? '!bg-[#6749C6]' : '!bg-[#6749C6]'
-          } !transition-all !duration-150 cursor-grab active:cursor-grabbing hover:!bg-[#5438B4]
-          before:!absolute before:!inset-0 before:!rounded-full before:!transition-all before:!duration-150
-          hover:before:!ring-2 hover:before:!ring-[#6749C6] hover:before:!ring-offset-2 hover:before:!ring-offset-[#D4A27F]
-          !flex !items-center !justify-center`}
-          style={{ 
-            transform: 'translate(-50%, 100%)',
-            zIndex: 100 
-          }}
-        >
-          <ChevronDown className="w-5 h-5 text-white" />
-        </Handle>
+        <div className="relative">
+          <Handle
+            type="source"
+            position={Position.Bottom}
+            id="claude-out"
+            isConnectable={isConnectable}
+            className={`!w-8 !h-8 ${
+              hasOutputConnection ? '!bg-[#6749C6]' : '!bg-[#6749C6]'
+            } !transition-all !duration-150 cursor-grab active:cursor-grabbing hover:!bg-[#5438B4]
+            before:!absolute before:!inset-0 before:!rounded-full before:!transition-all before:!duration-150
+            hover:before:!ring-2 hover:before:!ring-[#6749C6] hover:before:!ring-offset-2 hover:before:!ring-offset-[#D4A27F]
+            !flex !items-center !justify-center`}
+            style={{ 
+              transform: 'translate(-50%, 100%)',
+              zIndex: 100 
+            }}
+          >
+            <ChevronDown className="w-5 h-5 text-white" />
+          </Handle>
+        </div>
       </div>
     </div>
   )
