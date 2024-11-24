@@ -82,12 +82,18 @@ interface FlowProps {
 }
 
 export default function Flow({ initialFlowData, projectName, isPreview = false }: FlowProps) {
+  const [flowData, setFlowData] = useState(initialFlowData)
+
+  useEffect(() => {
+    setFlowData(initialFlowData)
+  }, [initialFlowData])
+
   // Initialize state with either initialFlowData or default values
   const [nodes, setNodes] = useState(
-    initialFlowData?.nodes || initialNodes
+    flowData?.nodes || initialNodes
   );
   const [edges, setEdges] = useState(
-    initialFlowData?.edges || initialEdges
+    flowData?.edges || initialEdges
   );
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -210,19 +216,18 @@ export default function Flow({ initialFlowData, projectName, isPreview = false }
     }
   }, [nodes, edges, projectName]);
 
-  // Initialize with initialFlowData if provided
-  useEffect(() => {
-    if (initialFlowData) {
-      setNodes(initialFlowData.nodes);
-      setEdges(initialFlowData.edges);
-    }
-  }, [initialFlowData]);
-
   // Disable interactions if it's a preview
   const proOptions = useMemo(() => ({
     hideAttribution: true,
     disabled: isPreview
   }), [isPreview]);
+
+  // Add viewport state with default zoom
+  const defaultViewport = {
+    x: 0,
+    y: 0,
+    zoom: 0.20, // This will zoom out to 75% of the default view
+  };
 
   return (
     <div style={{ height: '100%' }}>
@@ -234,10 +239,16 @@ export default function Flow({ initialFlowData, projectName, isPreview = false }
         onConnect={onConnect}
         nodeTypes={nodeTypes}
         proOptions={proOptions}
+        defaultViewport={defaultViewport}
         fitView
+        fitViewOptions={{
+          padding: 0.5, // Adds 50% padding around the nodes
+          minZoom: 0.5,
+          maxZoom: 1.5,
+        }}
       >
         {!isPreview && (
-          <div className="absolute bottom-4 right-4 flex gap-2">
+          <div className="absolute bottom-4 right-4 flex gap-2 bg-gray-900/80 backdrop-blur-sm p-3 rounded-lg shadow-lg z-50">
             <Button
               onClick={addPromptNode}
               className="bg-blue-500 hover:bg-blue-600 text-white flex items-center gap-2"

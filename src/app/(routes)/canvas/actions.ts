@@ -64,3 +64,26 @@ export async function createNewProject(formData: FormData) {
   revalidatePath('/')
   redirect(`/canvas/${data.id}`)
 }
+
+export async function getProjectFlow(projectId: string) {
+  'use server'
+  
+  const supabase = await createClient()
+  
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+
+  const { data: project, error } = await supabase
+    .from('flow_projects')
+    .select('*')
+    .eq('id', projectId)
+    .eq('user_id', user.id)
+    .single()
+
+  if (error) {
+    console.error('Error fetching project:', error)
+    return null
+  }
+
+  return project
+}

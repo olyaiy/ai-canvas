@@ -55,7 +55,7 @@ export default async function Page({ params }: PageProps) {
 
       {/* Canvas */}
       <div className="flex-1 p-4">
-        <Flow initialFlowData={project.flow_data} />
+        <Flow initialFlowData={project.flow_data} projectName={project.name} />
       </div>
     </div>
   );
