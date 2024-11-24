@@ -17,6 +17,11 @@ import { useState, useCallback, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { AnimatedEdge } from '@/components/edges/animated-edge'
+import { saveProject } from './actions'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Save } from "lucide-react"
+import { Label } from '@/components/ui/label';
 
 const nodeTypes = { textUpdater: TextUpdaterNode, promptInput: PromptInputNode, claude: ClaudeNode, gpt: GPTNode }
 
@@ -221,6 +226,44 @@ export default function Flow() {
           <Plus className="h-4 w-4" />
           <span>New Claude Agent</span>
         </Button>
+        
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button
+              className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2"
+            >
+              <Save className="h-4 w-4" />
+              <span>Save Project</span>
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Save Project</DialogTitle>
+            </DialogHeader>
+            <form action={saveProject} className="space-y-4">
+              <div>
+                <Label htmlFor="name">Project Name</Label>
+                <Input
+                  id="name"
+                  name="name"
+                  placeholder="My Amazing Flow"
+                  required
+                />
+              </div>
+              <input 
+                type="hidden" 
+                name="flow_data" 
+                value={JSON.stringify({
+                  nodes,
+                  edges,
+                })}
+              />
+              <Button type="submit" className="w-full">
+                Save Project
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
