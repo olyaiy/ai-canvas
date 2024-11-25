@@ -55,7 +55,6 @@ export function AppSidebar({ user }: { user: { name: string; email: string; imag
           {!isCollapsed && (
             <div className="flex flex-col overflow-hidden">
               <span className="font-medium truncate">{user.name}</span>
-              <span className="text-xs text-muted-foreground truncate">{user.email}</span>
             </div>
           )}
         </motion.div>
