@@ -39,7 +39,7 @@ A powerful visual flow builder for creating and managing AI agent workflows usin
 
 1. Clone the repository:
 ```bash
-git clone [your-repo-url]
+git clone https://github.com/olyaiy/ai-canvas
 ```
 
 2. Install dependencies:
@@ -100,4 +100,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Support
 
-For support, please [create an issue](your-repo-issues-url) in the repository.
+For support, please create an issue in the repository.
