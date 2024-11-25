@@ -66,7 +66,7 @@ const initialNodes = [
     type: 'claude',
     position: { x: 100, y: 400 },
     data: { 
-      systemPrompt: "remove spaces in the following sentance:",
+      systemPrompt: "You are a helpful assistant",
       output: undefined,
       temperature: 0.4,
       maxTokens: 8192,

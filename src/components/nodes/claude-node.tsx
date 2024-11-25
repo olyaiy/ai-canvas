@@ -52,9 +52,7 @@ export function ClaudeNode({
   const [hasInputConnection, setHasInputConnection] = useState(false)
   const [hasOutputConnection, setHasOutputConnection] = useState(false)
   const [selectedModel, setSelectedModel] = useState<ClaudeModelType>('claude-3-5-haiku-latest')
-  const [systemPrompt, setSystemPrompt] = useState<string>(
-    data.systemPrompt ?? "You are a helpful assistant"
-  )
+  const [systemPrompt, setSystemPrompt] = useState<string>(data.systemPrompt)
   const [temperature, setTemperature] = useState<number>(data.temperature ?? 0.4)
   const [maxTokens, setMaxTokens] = useState<number>(
     data.maxTokens ?? (selectedModel.includes('opus') ? 4096 : 8192)
@@ -238,6 +236,21 @@ export function ClaudeNode({
       return node
     }))
   }, [isCollapsed, nodeId, setNodes])
+
+  useEffect(() => {
+    setNodes(nodes => nodes.map(node => {
+      if (node.id === nodeId) {
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            systemPrompt
+          }
+        }
+      }
+      return node
+    }))
+  }, [systemPrompt, nodeId, setNodes])
 
   return (
     <div className="relative">
