@@ -87,3 +87,42 @@
   }
 }
 
+@keyframes flow {
+  from {
+    motion-offset: 0%;
+  }
+  to {
+    motion-offset: 100%;
+  }
+}
+
+.animate-flow {
+  animation: flow 2s linear infinite;
+}
+
+@keyframes flowLine {
+  from {
+    stroke-dashoffset: 24;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-flow-line {
+  animation: flowLine 3s linear infinite;
+}
+
+@keyframes flowLineGenerating {
+  from {
+    stroke-dashoffset: 24;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-flow-line-generating {
+  animation: flowLineGenerating 1.5s linear infinite;
+}
+

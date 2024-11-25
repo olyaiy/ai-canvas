@@ -60,7 +60,7 @@ export function ClaudeNode({
     data.maxTokens ?? (selectedModel.includes('opus') ? 4096 : 8192)
   )
   const nodeId = useNodeId()
-  const { getNode, getEdges, setNodes } = useReactFlow()
+  const { getNode, getEdges, setNodes, setEdges } = useReactFlow()
   const updateNodeInternals = useUpdateNodeInternals()
   const [isCopied, setIsCopied] = useState(false)
   const [inputPreviews, setInputPreviews] = useState<Array<{ text: string; nodeId: string }>>([]);
@@ -112,13 +112,23 @@ export function ClaudeNode({
     setOutput('')
     
     try {
+      // Update incoming edges to show generating state
+      setNodes(nodes => nodes.map(node => node))
       const edges = getEdges()
-      const incomingEdges = edges.filter(edge => edge.target === nodeId)
+      setEdges(edges => edges.map(edge => {
+        if (edge.target === nodeId) {
+          return {
+            ...edge,
+            data: { ...edge.data, isGenerating: true }
+          }
+        }
+        return edge
+      }))
       
-      if (incomingEdges.length === 0) return
+      if (edges.length === 0) return
       
       // Collect all input texts from connected nodes
-      const inputTexts = incomingEdges.map(edge => {
+      const inputTexts = edges.map(edge => {
         const sourceNode = getNode(edge.source)
         return sourceNode?.data?.value as string
       }).filter(text => text && typeof text === 'string')
@@ -170,8 +180,18 @@ export function ClaudeNode({
       setOutput('Error generating response')
     } finally {
       setIsLoading(false)
+      // Reset edge states
+      setEdges(edges => edges.map(edge => {
+        if (edge.target === nodeId) {
+          return {
+            ...edge,
+            data: { ...edge.data, isGenerating: false }
+          }
+        }
+        return edge
+      }))
     }
-  }, [nodeId, getNode, getEdges, selectedModel, systemPrompt, maxTokens, temperature, setNodes, scrollToBottom])
+  }, [nodeId, getNode, getEdges, selectedModel, systemPrompt, maxTokens, temperature, setNodes, setEdges])
 
   // Create a memoized version of getInputValue that updates when needed
   const getInputValue = useMemo(() => {

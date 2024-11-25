@@ -36,7 +36,7 @@ import {
 const nodeTypes = { textUpdater: TextUpdaterNode, promptInput: PromptInputNode, claude: ClaudeNode, gpt: GPTNode }
 
 const edgeTypes = {
-  default: AnimatedEdge,
+  animated: AnimatedEdge,
 }
 
 const initialNodes = [
@@ -275,6 +275,8 @@ export default function Flow({ initialFlowData, projectName, projectId, isPrevie
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
+        defaultEdgeOptions={{ type: 'animated' }}
         proOptions={proOptions}
         defaultViewport={defaultViewport}
         fitView
