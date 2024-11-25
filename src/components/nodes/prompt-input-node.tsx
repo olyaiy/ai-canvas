@@ -71,27 +71,27 @@ export function PromptInputNode({ id, data, isConnectable }: PromptInputNodeProp
       generateButton.click();
       
       // Wait for the generation to complete
-      return new Promise<void>((resolve) => {
+      return new Promise<void>((resolve, reject) => {
+        let timeoutId: NodeJS.Timeout;
         const checkInterval = setInterval(() => {
           // Get the latest node data
           const currentNode = getNodes().find(n => n.id === nodeId);
           
           // Check if the node has finished generating
           const isGenerating = nodeElement?.querySelector('.animate-spin') !== null;
-          const hasOutput = currentNode?.data?.value !== undefined;
+          const hasOutput = currentNode?.data?.value !== undefined && currentNode?.data?.value !== '';
           
-          // Resolve when generation is complete and we have output
           if (!isGenerating && hasOutput) {
             clearInterval(checkInterval);
-            // Add a small delay to ensure data propagation
-            setTimeout(resolve, 500);
+            clearTimeout(timeoutId);
+            resolve();
           }
         }, 100);
 
         // Add a timeout to prevent infinite waiting
-        setTimeout(() => {
+        timeoutId = setTimeout(() => {
           clearInterval(checkInterval);
-          resolve();
+          reject(new Error(`Generation timeout for node ${nodeId}`));
         }, 30000); // 30 second timeout
       });
     }
@@ -114,52 +114,80 @@ export function PromptInputNode({ id, data, isConnectable }: PromptInputNodeProp
     );
   }, [setNodes]);
 
+  // Add this helper function to get parent nodes
+  const getParentNodes = useCallback((nodeId: string): string[] => {
+    const edges = getEdges();
+    return edges
+      .filter(edge => edge.target === nodeId)
+      .map(edge => edge.source);
+  }, [getEdges]);
+
+  // Modified runPrompt function to handle errors better
   const runPrompt = useCallback(async () => {
     setIsRunning(true);
     try {
-      // Get all child nodes in order
       const childNodes = getChildNodes(id);
       
       // Set all nodes to waiting state initially
       childNodes.forEach(nodeId => {
         setNodeWaitingState(nodeId, true);
       });
-      
-      // Process nodes sequentially
-      for (const [index, nodeId] of childNodes.entries()) {
-        console.log(`Processing node: ${nodeId}`);
-        // Remove waiting state for current node
-        setNodeWaitingState(nodeId, false);
-        
-        // Wait a small moment for React to update the disabled state
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        // Now trigger the generation
-        await triggerNodeGeneration(nodeId);
-        
-        // Add a small delay between nodes
-        if (index < childNodes.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
+
+      const completedNodes = new Set<string>();
+      const runningPromises = new Map<string, Promise<void>>();
+
+      while (completedNodes.size < childNodes.length) {
+        const nodesToProcess = childNodes.filter(nodeId => {
+          if (completedNodes.has(nodeId)) return false;
+          if (runningPromises.has(nodeId)) return false;
+
+          const parents = getParentNodes(nodeId);
+          return parents.every(parentId => 
+            parentId === id || completedNodes.has(parentId)
+          );
+        });
+
+        const newPromises = nodesToProcess.map(async nodeId => {
+          setNodeWaitingState(nodeId, false);
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          try {
+            await triggerNodeGeneration(nodeId);
+            completedNodes.add(nodeId);
+          } catch (error) {
+            console.error(`Error generating node ${nodeId}:`, error);
+            // Still mark as completed even if there was an error
+            completedNodes.add(nodeId);
+          } finally {
+            runningPromises.delete(nodeId);
+          }
+        });
+
+        if (newPromises.length > 0) {
+          await Promise.race(newPromises).catch(console.error);
+        } else if (runningPromises.size > 0) {
+          // Wait for any running promise to complete if we can't start new ones
+          await Promise.race(Array.from(runningPromises.values())).catch(console.error);
+        } else {
+          // If we can't process any nodes and nothing is running, break to prevent infinite loop
+          break;
         }
       }
+
+      // Final cleanup
+      await Promise.all(Array.from(runningPromises.values())).catch(console.error);
+
     } catch (error) {
       console.error('Error running prompt:', error);
-      // Get child nodes again in case they changed
-      const childNodes = getChildNodes(id);
-      // Reset waiting state for all nodes in case of error
-      childNodes.forEach(nodeId => {
-        setNodeWaitingState(nodeId, false);
-      });
     } finally {
       setIsRunning(false);
-      // Get child nodes one final time to ensure we clean up all states
+      // Reset waiting state for all nodes
       const childNodes = getChildNodes(id);
-      // Reset waiting state for all nodes when complete
       childNodes.forEach(nodeId => {
         setNodeWaitingState(nodeId, false);
       });
     }
-  }, [id, getChildNodes, triggerNodeGeneration, setNodeWaitingState]);
+  }, [id, getChildNodes, getParentNodes, triggerNodeGeneration, setNodeWaitingState]);
 
   return (
     <div className="bg-white border-2 border-gray-200 rounded-lg p-3 min-w-[300px] shadow-sm">

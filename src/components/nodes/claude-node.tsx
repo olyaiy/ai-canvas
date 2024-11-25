@@ -51,7 +51,9 @@ export function ClaudeNode({
   const [output, setOutput] = useState<string>('')
   const [hasInputConnection, setHasInputConnection] = useState(false)
   const [hasOutputConnection, setHasOutputConnection] = useState(false)
-  const [selectedModel, setSelectedModel] = useState<ClaudeModelType>('claude-3-5-haiku-latest')
+  const [selectedModel, setSelectedModel] = useState<ClaudeModelType>(
+    data.model ?? 'claude-3-5-haiku-latest'
+  )
   const [systemPrompt, setSystemPrompt] = useState<string>(data.systemPrompt)
   const [temperature, setTemperature] = useState<number>(data.temperature ?? 0.4)
   const [maxTokens, setMaxTokens] = useState<number>(
@@ -252,6 +254,23 @@ export function ClaudeNode({
     }))
   }, [systemPrompt, nodeId, setNodes])
 
+  useEffect(() => {
+    setNodes(nodes => nodes.map(node => {
+      if (node.id === nodeId) {
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            temperature,
+            maxTokens,
+            model: selectedModel
+          }
+        }
+      }
+      return node
+    }))
+  }, [selectedModel, temperature, maxTokens, nodeId, setNodes])
+
   return (
     <div className="relative">
       <div className="absolute -top-7 left-0 right-0 flex items-center justify-between">
@@ -322,7 +341,7 @@ export function ClaudeNode({
               {isLoading || data.isWaiting ? (
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />
               ) : null}
-              {data.isWaiting ? 'Waiting for previous agent...' : 'Generate'}
+              {data.isWaiting ? 'Waiting...' : 'Generate'}
             </Button>
           </div>
 

@@ -67,6 +67,7 @@ const initialNodes = [
     position: { x: 100, y: 400 },
     data: { 
       systemPrompt: "You are a helpful assistant",
+      model: 'claude-3-5-haiku-latest',
       output: undefined,
       temperature: 0.4,
       maxTokens: 8192,
@@ -157,6 +158,7 @@ export default function Flow({ initialFlowData, projectName, projectId, isPrevie
       position,
       data: { 
         systemPrompt: "You are a helpful assistant",
+        model: 'claude-3-5-haiku-latest',
         output: undefined,
         temperature: 0.4,
         maxTokens: 8192,
